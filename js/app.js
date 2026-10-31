@@ -6,119 +6,695 @@ const START_KEY = 'codearena-cpp-start-v1';
 
 const challenges = [
   {
-    id: 'sum-two', title: 'Penjumlahan Sederhana', category: 'Dasar', difficulty: 'Easy', xp: 100, time: '10 min',
-    signature: 'int solve(int a, int b)',
-    description: 'Diberikan dua bilangan bulat <code>a</code> dan <code>b</code>. Buat fungsi yang mengembalikan hasil penjumlahan kedua bilangan tersebut. Perhatikan bahwa bilangan dapat bernilai negatif maupun nol.',
-    starter: 'int solve(int a, int b) {\n    // TODO: kembalikan hasil penjumlahan a dan b\n    return 0;\n}',
-    examples: [{input:'a = 2, b = 3',output:'5'},{input:'a = -4, b = 9',output:'5'}],
-    constraints: ['-1.000.000 ≤ a, b ≤ 1.000.000','Gunakan tipe data int.'],
-    hint: 'Operator + dapat langsung digunakan untuk menjumlahkan dua bilangan. Pastikan nilai yang dikembalikan berasal dari a dan b.',
-    tests: [
-      {label:'Contoh 1',expr:'solve(2, 3) == 5'}, {label:'Contoh 2',expr:'solve(-4, 9) == 5'},
-      {label:'Bilangan negatif',expr:'solve(-12, -8) == -20',hidden:true}, {label:'Nilai nol',expr:'solve(0, 0) == 0',hidden:true},
-      {label:'Batas nilai',expr:'solve(1000000, -999999) == 1',hidden:true}
+    "id": "sambutan-hackathon",
+    "stage": 1,
+    "title": "Sambutan Hackathon",
+    "category": "Dasar & Output",
+    "difficulty": "Easy",
+    "xp": 50,
+    "time": "8 min",
+    "signature": "int main() — output dan baris baru",
+    "description": "Hackathon akan segera dimulai! Panitia meminta kamu membuat layar sambutan sederhana. Tampilkan tiga baris informasi dengan urutan yang tepat. Tantangan ini melatih struktur program, <code>cout</code>, teks, dan baris baru.",
+    "starter": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // TODO: tampilkan tiga baris informasi hackathon\n    return 0;\n}",
+    "examples": [
+      {
+        "input": "Tidak ada input",
+        "output": "SELAMAT DATANG DI HACKATHON\nSiapkan ide dan logikamu!\nSemangat belajar C++!"
+      }
+    ],
+    "constraints": [
+      "Gunakan cout untuk menampilkan teks.",
+      "Setiap kalimat harus berada pada baris tersendiri.",
+      "Jangan menambahkan teks lain."
+    ],
+    "hint": "Gunakan operator << dan akhiri teks dengan \\n atau endl.",
+    "tests": [
+      {
+        "label": "Tampilan sambutan",
+        "input": "",
+        "expected": "SELAMAT DATANG DI HACKATHON\nSiapkan ide dan logikamu!\nSemangat belajar C++!"
+      },
+      {
+        "label": "Urutan dan baris",
+        "input": "",
+        "expected": "SELAMAT DATANG DI HACKATHON\nSiapkan ide dan logikamu!\nSemangat belajar C++!",
+        "hidden": true
+      }
     ]
   },
   {
-    id: 'even-odd', title: 'Ganjil atau Genap', category: 'Dasar', difficulty: 'Easy', xp: 100, time: '10 min',
-    signature: 'bool isEven(int n)',
-    description: 'Buat fungsi <code>isEven</code> yang mengembalikan <code>true</code> jika sebuah bilangan termasuk genap, dan <code>false</code> jika ganjil. Bilangan negatif juga harus ditangani dengan benar.',
-    starter: 'bool isEven(int n) {\n    // TODO: periksa apakah n merupakan bilangan genap\n    return false;\n}',
-    examples: [{input:'n = 8',output:'true'},{input:'n = 13',output:'false'}],
-    constraints: ['-1.000.000 ≤ n ≤ 1.000.000','Fungsi harus mengembalikan nilai boolean.'],
-    hint: 'Gunakan operator modulus (%) untuk memeriksa sisa pembagian sebuah bilangan dengan 2.',
-    tests: [
-      {label:'Bilangan genap',expr:'isEven(8) == true'}, {label:'Bilangan ganjil',expr:'isEven(13) == false'},
-      {label:'Bilangan nol',expr:'isEven(0) == true',hidden:true}, {label:'Genap negatif',expr:'isEven(-12) == true',hidden:true},
-      {label:'Ganjil negatif',expr:'isEven(-7) == false',hidden:true}
+    "id": "papan-skor",
+    "stage": 1,
+    "title": "Papan Skor Tim",
+    "category": "Dasar & Output",
+    "difficulty": "Easy",
+    "xp": 60,
+    "time": "8 min",
+    "signature": "int main() — menampilkan hasil perhitungan",
+    "description": "Tim kamu mendapat 10 poin dari tantangan pertama, 15 poin dari tantangan kedua, dan 5 poin bonus. Tampilkan total poin dengan menghitung ekspresi C++ secara langsung, bukan mengetik hasil akhirnya.",
+    "starter": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // TODO: tampilkan total 10 + 15 + 5 dengan format Total poin: ...\n    return 0;\n}",
+    "examples": [
+      {
+        "input": "Tidak ada input",
+        "output": "Total poin: 30"
+      }
+    ],
+    "constraints": [
+      "Gunakan ekspresi penjumlahan di dalam cout.",
+      "Teks output harus diawali Total poin:.",
+      "Tidak perlu menggunakan variabel."
+    ],
+    "hint": "C++ dapat menghitung ekspresi matematika sebelum hasilnya ditampilkan oleh cout.",
+    "tests": [
+      {
+        "label": "Total poin",
+        "input": "",
+        "expected": "Total poin: 30"
+      },
+      {
+        "label": "Ekspresi dihitung",
+        "input": "",
+        "expected": "Total poin: 30",
+        "hidden": true
+      }
     ]
   },
   {
-    id: 'max-array', title: 'Nilai Terbesar Array', category: 'Array', difficulty: 'Easy', xp: 120, time: '15 min',
-    signature: 'int findMax(vector<int> nums)',
-    description: 'Diberikan sebuah array bilangan bulat. Temukan dan kembalikan nilai yang paling besar. Array dijamin memiliki setidaknya satu elemen.',
-    starter: 'int findMax(vector<int> nums) {\n    // TODO: cari dan kembalikan nilai terbesar\n    return 0;\n}',
-    examples: [{input:'nums = [3, 9, 2, 7]',output:'9'},{input:'nums = [-8, -2, -5]',output:'-2'}],
-    constraints: ['1 ≤ nums.size() ≤ 10.000','-1.000.000 ≤ nums[i] ≤ 1.000.000'],
-    hint: 'Simpan elemen pertama sebagai nilai terbesar sementara. Telusuri elemen berikutnya dan perbarui nilai tersebut saat menemukan angka yang lebih besar.',
-    tests: [
-      {label:'Contoh array',expr:'findMax(vector<int>{3, 9, 2, 7}) == 9'}, {label:'Semua negatif',expr:'findMax(vector<int>{-8, -2, -5}) == -2'},
-      {label:'Satu elemen',expr:'findMax(vector<int>{42}) == 42',hidden:true}, {label:'Nilai duplikat',expr:'findMax(vector<int>{5, 5, 1, 5}) == 5',hidden:true},
-      {label:'Array panjang',expr:'findMax(vector<int>{-4, 0, 16, 3, 9, 12}) == 16',hidden:true}
+    "id": "data-peserta",
+    "stage": 2,
+    "title": "Data Peserta",
+    "category": "Variabel & Input",
+    "difficulty": "Easy",
+    "xp": 70,
+    "time": "10 min",
+    "signature": "int main() — variabel string, int, dan cin",
+    "description": "Panitia membutuhkan nama panggilan dan umur peserta. Bacalah dua data dari input, lalu tampilkan kembali dengan format yang diminta. Gunakan variabel <code>string</code>, <code>int</code>, dan <code>cin</code>.",
+    "starter": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string nama;\n    int umur;\n    // TODO: baca nama dan umur\n    // TODO: tampilkan data peserta\n    return 0;\n}",
+    "examples": [
+      {
+        "input": "Alya 13",
+        "output": "Peserta: Alya\nUmur: 13 tahun"
+      }
+    ],
+    "constraints": [
+      "Input berisi satu kata nama, kemudian umur.",
+      "Gunakan cin untuk membaca kedua data.",
+      "Tampilkan umur dengan tambahan teks tahun."
+    ],
+    "hint": "Setelah mendeklarasikan variabel, gunakan cin >> nama >> umur; kemudian tampilkan nilainya dengan cout.",
+    "tests": [
+      {
+        "label": "Data contoh",
+        "input": "Alya 13",
+        "expected": "Peserta: Alya\nUmur: 13 tahun"
+      },
+      {
+        "label": "Nama dan umur berbeda",
+        "input": "Rafi 14",
+        "expected": "Peserta: Rafi\nUmur: 14 tahun",
+        "hidden": true
+      },
+      {
+        "label": "Peserta kelas 7",
+        "input": "Dina 12",
+        "expected": "Peserta: Dina\nUmur: 12 tahun",
+        "hidden": true
+      }
     ]
   },
   {
-    id: 'palindrome', title: 'Deteksi Palindrome', category: 'String', difficulty: 'Easy', xp: 130, time: '15 min',
-    signature: 'bool isPalindrome(string text)',
-    description: 'Sebuah kata disebut palindrome jika dibaca dari kiri ke kanan maupun kanan ke kiri menghasilkan kata yang sama. Buat fungsi yang memeriksa apakah <code>text</code> merupakan palindrome. Anggap semua huruf menggunakan huruf kecil dan tidak mengandung spasi.',
-    starter: 'bool isPalindrome(string text) {\n    // TODO: periksa apakah text adalah palindrome\n    return false;\n}',
-    examples: [{input:'text = "katak"',output:'true'},{input:'text = "komputer"',output:'false'}],
-    constraints: ['0 ≤ text.length() ≤ 10.000','String hanya berisi huruf a-z.'],
-    hint: 'Bandingkan karakter paling kiri dengan karakter paling kanan. Bergeraklah menuju tengah sambil memastikan setiap pasangan karakter sama.',
-    tests: [
-      {label:'Palindrome genap',expr:'isPalindrome("level") == true'}, {label:'Bukan palindrome',expr:'isPalindrome("komputer") == false'},
-      {label:'Palindrom pendek',expr:'isPalindrome("a") == true',hidden:true}, {label:'String kosong',expr:'isPalindrome("") == true',hidden:true},
-      {label:'Palindrom panjang',expr:'isPalindrome("kasurrusak") == true',hidden:true}
+    "id": "kasir-kantin",
+    "stage": 2,
+    "title": "Kasir Kantin Sekolah",
+    "category": "Variabel & Operator",
+    "difficulty": "Easy",
+    "xp": 80,
+    "time": "12 min",
+    "signature": "int main() — variabel dan operasi aritmetika",
+    "description": "Di kantin, seorang siswa membeli beberapa roti. Program menerima harga satu roti, jumlah roti, dan uang pembayaran. Hitung total belanja serta uang kembaliannya. Gunakan variabel dan operator aritmetika.",
+    "starter": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int harga, jumlah, bayar;\n    cin >> harga >> jumlah >> bayar;\n    // TODO: hitung total dan kembalian\n    return 0;\n}",
+    "examples": [
+      {
+        "input": "3000 2 10000",
+        "output": "Total: 6000\nKembalian: 4000"
+      }
+    ],
+    "constraints": [
+      "Urutan input: harga, jumlah, uang bayar.",
+      "Total dihitung dari harga dikali jumlah.",
+      "Kembalian adalah uang bayar dikurangi total."
+    ],
+    "hint": "Simpan harga * jumlah ke variabel total, lalu hitung bayar - total.",
+    "tests": [
+      {
+        "label": "Dua roti",
+        "input": "3000 2 10000",
+        "expected": "Total: 6000\nKembalian: 4000"
+      },
+      {
+        "label": "Tiga roti",
+        "input": "2500 3 10000",
+        "expected": "Total: 7500\nKembalian: 2500",
+        "hidden": true
+      },
+      {
+        "label": "Pembayaran pas",
+        "input": "4000 2 8000",
+        "expected": "Total: 8000\nKembalian: 0",
+        "hidden": true
+      }
     ]
   },
   {
-    id: 'count-vowels', title: 'Hitung Huruf Vokal', category: 'String', difficulty: 'Easy', xp: 130, time: '15 min',
-    signature: 'int countVowels(string text)',
-    description: 'Buat fungsi untuk menghitung jumlah huruf vokal dalam sebuah string. Huruf vokal yang dihitung adalah <code>a</code>, <code>i</code>, <code>u</code>, <code>e</code>, dan <code>o</code>. Semua input menggunakan huruf kecil.',
-    starter: 'int countVowels(string text) {\n    // TODO: hitung jumlah huruf vokal\n    return 0;\n}',
-    examples: [{input:'text = "informatika"',output:'5'},{input:'text = "skripsi"',output:'2'}],
-    constraints: ['0 ≤ text.length() ≤ 100.000','String hanya berisi huruf a-z.'],
-    hint: 'Telusuri setiap karakter menggunakan perulangan. Untuk setiap karakter, periksa apakah karakter tersebut termasuk salah satu dari lima huruf vokal.',
-    tests: [
-      {label:'Contoh informatika',expr:'countVowels("informatika") == 5'}, {label:'Contoh skripsi',expr:'countVowels("skripsi") == 2'},
-      {label:'Tanpa vokal',expr:'countVowels("rhythm") == 0',hidden:true}, {label:'Semua vokal',expr:'countVowels("aeiou") == 5',hidden:true},
-      {label:'String kosong',expr:'countVowels("") == 0',hidden:true}
+    "id": "rata-rata-ulangan",
+    "stage": 2,
+    "title": "Rata-rata Nilai Ulangan",
+    "category": "Variabel & Operator",
+    "difficulty": "Easy",
+    "xp": 90,
+    "time": "12 min",
+    "signature": "int main() — tipe data numerik dan pembagian",
+    "description": "Tiga nilai ulangan Informatika seorang siswa dimasukkan melalui input. Hitung nilai rata-ratanya. Gunakan tipe data <code>double</code> agar hasil pembagian dapat memiliki angka desimal.",
+    "starter": "#include <iostream>\nusing namespace std;\n\nint main() {\n    double a, b, c;\n    cin >> a >> b >> c;\n    // TODO: hitung dan tampilkan rata-rata\n    return 0;\n}",
+    "examples": [
+      {
+        "input": "80 90 70",
+        "output": "Rata-rata: 80"
+      }
+    ],
+    "constraints": [
+      "Urutan input adalah tiga nilai ulangan.",
+      "Gunakan pembagian dengan 3.0.",
+      "Tampilkan awalan Rata-rata:."
+    ],
+    "hint": "Jumlahkan ketiga nilai, kemudian bagi dengan 3.0.",
+    "tests": [
+      {
+        "label": "Rata-rata bulat",
+        "input": "80 90 70",
+        "expected": "Rata-rata: 80"
+      },
+      {
+        "label": "Rata-rata desimal",
+        "input": "80 85 90",
+        "expected": "Rata-rata: 85"
+      },
+      {
+        "label": "Nilai rendah",
+        "input": "60 70 80",
+        "expected": "Rata-rata: 70",
+        "hidden": true
+      }
     ]
   },
   {
-    id: 'factorial', title: 'Faktorial dengan Loop', category: 'Dasar', difficulty: 'Medium', xp: 180, time: '20 min',
-    signature: 'long long factorial(int n)',
-    description: 'Faktorial dari <code>n</code> adalah hasil perkalian semua bilangan bulat positif dari 1 sampai n. Secara khusus, <code>0! = 1</code>. Buat fungsi yang menghitung faktorial menggunakan perulangan, bukan rekursi.',
-    starter: 'long long factorial(int n) {\n    // TODO: hitung n! menggunakan looping\n    return 1;\n}',
-    examples: [{input:'n = 5',output:'120'},{input:'n = 0',output:'1'}],
-    constraints: ['0 ≤ n ≤ 20','Gunakan tipe data long long.'],
-    hint: 'Mulai dari hasil 1. Kalikan hasil dengan setiap bilangan dari 1 hingga n menggunakan for atau while.',
-    tests: [
-      {label:'Faktorial 5',expr:'factorial(5) == 120LL'}, {label:'Faktorial 0',expr:'factorial(0) == 1LL'},
-      {label:'Faktorial 1',expr:'factorial(1) == 1LL',hidden:true}, {label:'Faktorial 8',expr:'factorial(8) == 40320LL',hidden:true},
-      {label:'Batas maksimum',expr:'factorial(20) == 2432902008176640000LL',hidden:true}
+    "id": "cek-kelayakan-lomba",
+    "stage": 3,
+    "title": "Cek Kelayakan Lomba",
+    "category": "Percabangan",
+    "difficulty": "Easy",
+    "xp": 100,
+    "time": "12 min",
+    "signature": "int main() — if dan else",
+    "description": "Lomba robotik tingkat SMP dapat diikuti siswa yang berusia minimal 12 tahun. Baca umur peserta dan tampilkan apakah ia boleh mengikuti lomba. Gunakan percabangan <code>if</code> dan <code>else</code>.",
+    "starter": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int umur;\n    cin >> umur;\n    // TODO: jika umur minimal 12, tampilkan Boleh ikut\n    // selain itu tampilkan Belum memenuhi syarat\n    return 0;\n}",
+    "examples": [
+      {
+        "input": "13",
+        "output": "Boleh ikut"
+      }
+    ],
+    "constraints": [
+      "Umur minimal adalah 12 tahun.",
+      "Umur 12 tahun sudah boleh mengikuti lomba.",
+      "Gunakan if dan else."
+    ],
+    "hint": "Gunakan kondisi umur >= 12.",
+    "tests": [
+      {
+        "label": "Umur 13",
+        "input": "13",
+        "expected": "Boleh ikut"
+      },
+      {
+        "label": "Batas umur",
+        "input": "12",
+        "expected": "Boleh ikut",
+        "hidden": true
+      },
+      {
+        "label": "Umur 11",
+        "input": "11",
+        "expected": "Belum memenuhi syarat",
+        "hidden": true
+      }
     ]
   },
   {
-    id: 'fizzbuzz', title: 'FizzBuzz Challenge', category: 'Array', difficulty: 'Medium', xp: 200, time: '25 min',
-    signature: 'vector<string> fizzBuzz(int n)',
-    description: 'Kembalikan deretan string dari angka 1 sampai n dengan aturan berikut: kelipatan 3 menjadi <code>"Fizz"</code>, kelipatan 5 menjadi <code>"Buzz"</code>, dan kelipatan keduanya menjadi <code>"FizzBuzz"</code>. Angka lainnya dikembalikan sebagai string angka tersebut.',
-    starter: 'vector<string> fizzBuzz(int n) {\n    vector<string> result;\n    // TODO: isi result sesuai aturan FizzBuzz\n    return result;\n}',
-    examples: [{input:'n = 5',output:'["1", "2", "Fizz", "4", "Buzz"]'},{input:'n = 15',output:'... "FizzBuzz"]'}],
-    constraints: ['1 ≤ n ≤ 10.000','Urutan hasil harus dimulai dari 1.'],
-    hint: 'Periksa kelipatan 3 dan 5 secara bersamaan terlebih dahulu. Setelah itu periksa kelipatan 3, kelipatan 5, lalu kasus angka biasa.',
-    tests: [
-      {label:'Sampai 5',expr:'fizzBuzz(5) == vector<string>{"1", "2", "Fizz", "4", "Buzz"}'},
-      {label:'Sampai 15',expr:'fizzBuzz(15).back() == "FizzBuzz" && fizzBuzz(15)[14] == "FizzBuzz"'},
-      {label:'Kelipatan 3',expr:'fizzBuzz(3) == vector<string>{"1", "2", "Fizz"}',hidden:true},
-      {label:'Kelipatan 5',expr:'fizzBuzz(10)[9] == "Buzz"',hidden:true},
-      {label:'Pola 15 angka',expr:'fizzBuzz(15).size() == 15 && fizzBuzz(15)[2] == "Fizz" && fizzBuzz(15)[4] == "Buzz"',hidden:true}
+    "id": "seleksi-robotik",
+    "stage": 3,
+    "title": "Seleksi Tim Robotik",
+    "category": "Percabangan & Logika",
+    "difficulty": "Medium",
+    "xp": 110,
+    "time": "15 min",
+    "signature": "int main() — operator logika &&",
+    "description": "Untuk masuk tim robotik, siswa harus berusia minimal 12 tahun dan sudah mendapat izin orang tua. Baca umur dan status izin (1 = ya, 0 = tidak). Gunakan operator logika <code>&&</code> untuk memeriksa kedua syarat.",
+    "starter": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int umur, izin;\n    cin >> umur >> izin;\n    // TODO: periksa apakah umur cukup DAN izin diberikan\n    return 0;\n}",
+    "examples": [
+      {
+        "input": "13 1",
+        "output": "Diterima"
+      }
+    ],
+    "constraints": [
+      "Input pertama adalah umur.",
+      "Input kedua adalah izin orang tua: 1 atau 0.",
+      "Kedua syarat harus terpenuhi."
+    ],
+    "hint": "Kondisi dapat ditulis umur >= 12 && izin == 1.",
+    "tests": [
+      {
+        "label": "Umur dan izin terpenuhi",
+        "input": "13 1",
+        "expected": "Diterima"
+      },
+      {
+        "label": "Umur cukup tanpa izin",
+        "input": "13 0",
+        "expected": "Belum diterima",
+        "hidden": true
+      },
+      {
+        "label": "Umur belum cukup",
+        "input": "11 1",
+        "expected": "Belum diterima",
+        "hidden": true
+      }
     ]
   },
   {
-    id: 'two-sum', title: 'Two Sum', category: 'Array', difficulty: 'Medium', xp: 250, time: '30 min',
-    signature: 'vector<int> twoSum(vector<int> nums, int target)',
-    description: 'Diberikan array <code>nums</code> dan sebuah <code>target</code>. Kembalikan dua indeks berbeda yang nilai elemennya jika dijumlahkan sama dengan target. Dijamin terdapat tepat satu pasangan jawaban. Urutan indeks tidak harus diurutkan.',
-    starter: 'vector<int> twoSum(vector<int> nums, int target) {\n    // TODO: temukan dua indeks dengan jumlah == target\n    return {};\n}',
-    examples: [{input:'nums = [2, 7, 11, 15], target = 9',output:'[0, 1]'},{input:'nums = [3, 2, 4], target = 6',output:'[1, 2]'}],
-    constraints: ['2 ≤ nums.size() ≤ 10.000','-1.000.000 ≤ nums[i], target ≤ 1.000.000','Setiap indeks hanya boleh digunakan satu kali.'],
-    hint: 'Mulai dari pendekatan dua perulangan: pilih satu elemen, lalu cari pasangan di posisi setelahnya. Setelah berhasil, kamu bisa mencoba optimasi menggunakan unordered_map.',
-    tests: [
-      {label:'Contoh pertama',expr:'twoSum(vector<int>{2, 7, 11, 15}, 9) == vector<int>{0, 1}'},
-      {label:'Contoh kedua',expr:'twoSum(vector<int>{3, 2, 4}, 6) == vector<int>{1, 2}'},
-      {label:'Bilangan negatif',expr:'twoSum(vector<int>{-3, 4, 3, 90}, 0) == vector<int>{0, 2}',hidden:true},
-      {label:'Angka duplikat',expr:'twoSum(vector<int>{3, 3}, 6) == vector<int>{0, 1}',hidden:true},
-      {label:'Target negatif',expr:'twoSum(vector<int>{-5, -2, -8, 1}, -7) == vector<int>{0, 1}',hidden:true}
+    "id": "menu-perpustakaan",
+    "stage": 3,
+    "title": "Menu Perpustakaan",
+    "category": "Switch Case",
+    "difficulty": "Medium",
+    "xp": 120,
+    "time": "15 min",
+    "signature": "int main() — switch, case, break, default",
+    "description": "Perpustakaan sekolah memiliki tiga menu: 1 untuk Pinjam Buku, 2 untuk Kembalikan Buku, dan 3 untuk Cari Buku. Baca nomor pilihan, lalu tampilkan menu yang sesuai menggunakan <code>switch-case</code>.",
+    "starter": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int pilihan;\n    cin >> pilihan;\n    // TODO: buat switch(pilihan), case 1, 2, 3, dan default\n    return 0;\n}",
+    "examples": [
+      {
+        "input": "1",
+        "output": "Pinjam Buku"
+      }
+    ],
+    "constraints": [
+      "Pilihan 1 menampilkan Pinjam Buku.",
+      "Pilihan 2 menampilkan Kembalikan Buku.",
+      "Pilihan 3 menampilkan Cari Buku.",
+      "Pilihan lain menampilkan Menu tidak tersedia."
+    ],
+    "hint": "Gunakan switch(pilihan). Setiap case sebaiknya diakhiri break, lalu tangani pilihan lain dengan default.",
+    "tests": [
+      {
+        "label": "Menu pinjam",
+        "input": "1",
+        "expected": "Pinjam Buku"
+      },
+      {
+        "label": "Menu kembalikan",
+        "input": "2",
+        "expected": "Kembalikan Buku",
+        "hidden": true
+      },
+      {
+        "label": "Menu cari",
+        "input": "3",
+        "expected": "Cari Buku",
+        "hidden": true
+      },
+      {
+        "label": "Pilihan tidak tersedia",
+        "input": "9",
+        "expected": "Menu tidak tersedia",
+        "hidden": true
+      }
+    ]
+  },
+  {
+    "id": "target-tabungan",
+    "stage": 4,
+    "title": "Target Tabungan",
+    "category": "Perulangan",
+    "difficulty": "Medium",
+    "xp": 130,
+    "time": "15 min",
+    "signature": "int main() — while dan akumulasi",
+    "description": "Alya menabung Rp5.000 setiap hari. Buat program yang menghitung berapa hari yang diperlukan hingga tabungannya mencapai atau melewati target. Gunakan perulangan <code>while</code> dan variabel akumulasi.",
+    "starter": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int target;\n    cin >> target;\n    int tabungan = 0;\n    int hari = 0;\n    // TODO: gunakan while sampai tabungan mencapai target\n    cout << hari << \" hari\";\n    return 0;\n}",
+    "examples": [
+      {
+        "input": "12000",
+        "output": "3 hari"
+      }
+    ],
+    "constraints": [
+      "Tabungan bertambah Rp5.000 setiap hari.",
+      "Jika target 0 atau kurang, hasilnya 0 hari.",
+      "Gunakan while, bukan menulis jawaban langsung."
+    ],
+    "hint": "Selama tabungan < target, tambahkan 5000 ke tabungan dan tambahkan 1 ke hari.",
+    "tests": [
+      {
+        "label": "Target 12.000",
+        "input": "12000",
+        "expected": "3 hari"
+      },
+      {
+        "label": "Target 20.000",
+        "input": "20000",
+        "expected": "4 hari",
+        "hidden": true
+      },
+      {
+        "label": "Target nol",
+        "input": "0",
+        "expected": "0 hari",
+        "hidden": true
+      },
+      {
+        "label": "Target tepat",
+        "input": "15000",
+        "expected": "3 hari",
+        "hidden": true
+      }
+    ]
+  },
+  {
+    "id": "ulangi-kuis",
+    "stage": 4,
+    "title": "Ulangi Kuis Sampai Benar",
+    "category": "Perulangan",
+    "difficulty": "Medium",
+    "xp": 140,
+    "time": "18 min",
+    "signature": "int main() — do-while",
+    "description": "Dalam kuis, jawaban yang benar adalah angka 7. Program menerima beberapa jawaban sampai peserta memasukkan angka 7. Hitung berapa kali peserta mencoba. Gunakan <code>do-while</code> agar input pertama selalu dihitung.",
+    "starter": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int jawaban, percobaan = 0;\n    // TODO: baca jawaban minimal satu kali dengan do-while\n    cout << percobaan << \" percobaan\";\n    return 0;\n}",
+    "examples": [
+      {
+        "input": "2 4 7",
+        "output": "3 percobaan"
+      }
+    ],
+    "constraints": [
+      "Jawaban benar adalah 7.",
+      "Input selalu menyediakan angka 7.",
+      "Percobaan pertama harus ikut dihitung.",
+      "Gunakan do-while."
+    ],
+    "hint": "Di dalam do, baca jawaban lalu tambah percobaan. Ulangi selama jawaban != 7.",
+    "tests": [
+      {
+        "label": "Benar pada percobaan ketiga",
+        "input": "2 4 7",
+        "expected": "3 percobaan"
+      },
+      {
+        "label": "Langsung benar",
+        "input": "7",
+        "expected": "1 percobaan",
+        "hidden": true
+      },
+      {
+        "label": "Benar pada percobaan keempat",
+        "input": "1 2 3 7",
+        "expected": "4 percobaan",
+        "hidden": true
+      }
+    ]
+  },
+  {
+    "id": "rekap-kehadiran",
+    "stage": 4,
+    "title": "Rekap Kehadiran Kelas",
+    "category": "Perulangan",
+    "difficulty": "Medium",
+    "xp": 150,
+    "time": "18 min",
+    "signature": "int main() — for dan penjumlahan",
+    "description": "Data kehadiran siswa ditulis sebagai angka: 1 berarti hadir dan 0 berarti tidak hadir. Baca jumlah siswa, lalu baca status kehadiran setiap siswa. Hitung jumlah siswa yang hadir menggunakan <code>for loop</code>.",
+    "starter": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int n;\n    cin >> n;\n    int totalHadir = 0;\n    // TODO: gunakan for untuk membaca n data kehadiran\n    cout << \"Hadir: \" << totalHadir;\n    return 0;\n}",
+    "examples": [
+      {
+        "input": "5\n1 0 1 1 0",
+        "output": "Hadir: 3"
+      }
+    ],
+    "constraints": [
+      "Input pertama adalah jumlah siswa.",
+      "Input berikutnya berisi n angka 1 atau 0.",
+      "Gunakan for untuk membaca seluruh data."
+    ],
+    "hint": "Ulangi sebanyak n kali. Jika status yang dibaca bernilai 1, tambahkan totalHadir.",
+    "tests": [
+      {
+        "label": "Lima siswa",
+        "input": "5\n1 0 1 1 0",
+        "expected": "Hadir: 3"
+      },
+      {
+        "label": "Semua hadir",
+        "input": "4\n1 1 1 1",
+        "expected": "Hadir: 4",
+        "hidden": true
+      },
+      {
+        "label": "Tidak ada yang hadir",
+        "input": "3\n0 0 0",
+        "expected": "Hadir: 0",
+        "hidden": true
+      }
+    ]
+  },
+  {
+    "id": "denah-aula",
+    "stage": 5,
+    "title": "Denah Kursi Aula",
+    "category": "Array & Pola",
+    "difficulty": "Medium",
+    "xp": 160,
+    "time": "20 min",
+    "signature": "int main() — nested for loop",
+    "description": "Panitia ingin membuat denah kursi aula berbentuk kotak. Program membaca jumlah baris dan kolom, lalu menampilkan huruf O untuk setiap kursi. Gunakan <code>nested for loop</code> atau perulangan bersarang.",
+    "starter": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int baris, kolom;\n    cin >> baris >> kolom;\n    // TODO: gunakan for di dalam for untuk mencetak pola kursi\n    return 0;\n}",
+    "examples": [
+      {
+        "input": "2 3",
+        "output": "O O O\nO O O"
+      }
+    ],
+    "constraints": [
+      "Input pertama adalah jumlah baris, kedua jumlah kolom.",
+      "Pisahkan kursi dengan satu spasi.",
+      "Jangan memberi spasi setelah kursi terakhir pada setiap baris."
+    ],
+    "hint": "Loop luar mengatur baris, loop dalam mengatur kolom. Cetak baris baru setelah loop kolom selesai.",
+    "tests": [
+      {
+        "label": "Denah 2 x 3",
+        "input": "2 3",
+        "expected": "O O O\nO O O"
+      },
+      {
+        "label": "Denah 1 x 4",
+        "input": "1 4",
+        "expected": "O O O O",
+        "hidden": true
+      },
+      {
+        "label": "Denah 3 x 2",
+        "input": "3 2",
+        "expected": "O O\nO O\nO O",
+        "hidden": true
+      }
+    ]
+  },
+  {
+    "id": "nilai-tertinggi",
+    "stage": 5,
+    "title": "Cari Nilai Tertinggi",
+    "category": "Array",
+    "difficulty": "Medium",
+    "xp": 170,
+    "time": "20 min",
+    "signature": "int main() — array dan perulangan",
+    "description": "Guru ingin mengetahui nilai ulangan tertinggi di kelas. Program menerima jumlah siswa dan nilai setiap siswa. Simpan data ke dalam array, lalu cari nilai tertinggi menggunakan perulangan.",
+    "starter": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int n;\n    cin >> n;\n    int nilai[100];\n    // TODO: baca nilai ke dalam array\n    // TODO: cari nilai tertinggi\n    return 0;\n}",
+    "examples": [
+      {
+        "input": "5\n78 90 85 92 88",
+        "output": "Nilai tertinggi: 92"
+      }
+    ],
+    "constraints": [
+      "Jumlah siswa minimal 1 dan maksimal 100.",
+      "Gunakan array untuk menyimpan nilai.",
+      "Jangan mengurutkan array."
+    ],
+    "hint": "Baca semua nilai ke array. Gunakan nilai[0] sebagai nilai tertinggi awal, lalu bandingkan dengan elemen berikutnya.",
+    "tests": [
+      {
+        "label": "Nilai lima siswa",
+        "input": "5\n78 90 85 92 88",
+        "expected": "Nilai tertinggi: 92"
+      },
+      {
+        "label": "Satu siswa",
+        "input": "1\n67",
+        "expected": "Nilai tertinggi: 67",
+        "hidden": true
+      },
+      {
+        "label": "Nilai pertama tertinggi",
+        "input": "3\n100 80 70",
+        "expected": "Nilai tertinggi: 100",
+        "hidden": true
+      }
+    ]
+  },
+  {
+    "id": "profil-nama-tim",
+    "stage": 6,
+    "title": "Profil Nama Tim",
+    "category": "String & Method",
+    "difficulty": "Medium",
+    "xp": 180,
+    "time": "18 min",
+    "signature": "int main() — string, length(), dan at()",
+    "description": "Panitia ingin menampilkan ringkasan nama tim. Bacalah satu nama tim, kemudian tampilkan panjang nama dan karakter pertamanya. Gunakan object <code>string</code> serta method <code>length()</code> dan <code>at()</code>.",
+    "starter": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string nama;\n    cin >> nama;\n    // TODO: tampilkan panjang nama dan karakter pertama\n    return 0;\n}",
+    "examples": [
+      {
+        "input": "RobotHebat",
+        "output": "Panjang nama: 10\nHuruf pertama: R"
+      }
+    ],
+    "constraints": [
+      "Nama tim tidak mengandung spasi.",
+      "Gunakan nama.length() untuk menghitung karakter.",
+      "Gunakan nama.at(0) untuk karakter pertama."
+    ],
+    "hint": "Panjang string dapat diketahui dengan nama.length(). Karakter pertama memiliki indeks 0.",
+    "tests": [
+      {
+        "label": "Nama RobotHebat",
+        "input": "RobotHebat",
+        "expected": "Panjang nama: 10\nHuruf pertama: R"
+      },
+      {
+        "label": "Nama ICT",
+        "input": "ICT",
+        "expected": "Panjang nama: 3\nHuruf pertama: I",
+        "hidden": true
+      },
+      {
+        "label": "Nama pendek",
+        "input": "Tim7",
+        "expected": "Panjang nama: 4\nHuruf pertama: T",
+        "hidden": true
+      }
+    ]
+  },
+  {
+    "id": "hitung-bonus",
+    "stage": 6,
+    "title": "Hitung Bonus Tim",
+    "category": "Fungsi & Scope",
+    "difficulty": "Medium",
+    "xp": 190,
+    "time": "20 min",
+    "signature": "int hitungPoin(int dasar, int bonus)",
+    "description": "Tim memperoleh poin dasar dan poin bonus. Buat fungsi <code>hitungPoin()</code> yang menerima dua parameter dan mengembalikan jumlah keduanya. Panggil fungsi tersebut dari <code>main()</code>. Gunakan variabel lokal di dalam fungsi.",
+    "starter": "#include <iostream>\nusing namespace std;\n// TODO: buat fungsi hitungPoin dengan dua parameter int\n\nint main() {\n    int dasar, bonus;\n    cin >> dasar >> bonus;\n    cout << \"Total poin: \" << hitungPoin(dasar, bonus);\n    return 0;\n}",
+    "examples": [
+      {
+        "input": "100 25",
+        "output": "Total poin: 125"
+      }
+    ],
+    "constraints": [
+      "Buat fungsi bernama hitungPoin.",
+      "Fungsi menerima parameter dasar dan bonus.",
+      "Gunakan return untuk mengembalikan hasil penjumlahan.",
+      "Jangan menggunakan variabel global."
+    ],
+    "hint": "Buat fungsi bertipe int, lalu return dasar + bonus. main() memanggil fungsi tersebut.",
+    "tests": [
+      {
+        "label": "Ada bonus",
+        "input": "100 25",
+        "expected": "Total poin: 125"
+      },
+      {
+        "label": "Bonus kecil",
+        "input": "50 10",
+        "expected": "Total poin: 60",
+        "hidden": true
+      },
+      {
+        "label": "Bonus nol",
+        "input": "80 0",
+        "expected": "Total poin: 80",
+        "hidden": true
+      }
+    ]
+  },
+  {
+    "id": "final-rekap-nilai",
+    "stage": 7,
+    "title": "Final: Rekap Nilai Kelas",
+    "category": "Final Challenge",
+    "difficulty": "Hard",
+    "xp": 300,
+    "time": "30 min",
+    "signature": "vector<string> rekapKelas(...) + int main()",
+    "description": "Ini adalah tantangan akhir. Guru ingin membuat rekap sederhana untuk satu kelas. Baca nama dan nilai setiap siswa, tentukan statusnya, lalu tampilkan hasil rekap. Gabungkan fungsi, vector, string, perulangan, dan percabangan yang sudah dipelajari.",
+    "starter": "#include <iostream>\n#include <string>\n#include <vector>\nusing namespace std;\n\n// TODO: buat fungsi string statusNilai(int nilai)\n// Nilai 75 atau lebih: LULUS\n// Nilai di bawah 75: REMEDIAL\n\nint main() {\n    int n;\n    cin >> n;\n    vector<string> nama(n);\n    vector<int> nilai(n);\n    // TODO: baca nama dan nilai setiap siswa\n    // TODO: tampilkan Nama: STATUS untuk setiap siswa\n    return 0;\n}",
+    "examples": [
+      {
+        "input": "3\nAlya 90\nRafi 70\nDina 80",
+        "output": "Alya: LULUS\nRafi: REMEDIAL\nDina: LULUS"
+      }
+    ],
+    "constraints": [
+      "Jumlah siswa 1 sampai 30.",
+      "Gunakan vector untuk menyimpan nama dan nilai.",
+      "Buat fungsi statusNilai() yang mengembalikan string.",
+      "Nilai minimal kelulusan adalah 75.",
+      "Urutan hasil harus mengikuti urutan input."
+    ],
+    "hint": "Baca data menggunakan for. Buat fungsi yang memeriksa nilai dengan if-else. Setelah semua data dibaca, tampilkan nama dan hasil fungsi tersebut.",
+    "tests": [
+      {
+        "label": "Tiga siswa",
+        "input": "3\nAlya 90\nRafi 70\nDina 80",
+        "expected": "Alya: LULUS\nRafi: REMEDIAL\nDina: LULUS"
+      },
+      {
+        "label": "Nilai batas",
+        "input": "2\nBudi 75\nSiti 74",
+        "expected": "Budi: LULUS\nSiti: REMEDIAL",
+        "hidden": true
+      },
+      {
+        "label": "Seluruhnya lulus",
+        "input": "3\nAli 90\nNina 88\nFajar 100",
+        "expected": "Ali: LULUS\nNina: LULUS\nFajar: LULUS",
+        "hidden": true
+      }
     ]
   }
 ];
@@ -153,12 +729,12 @@ function setConsole(tab) {
 }
 function updateProgress() {
   const count = state.solved.length; const percent = Math.round(count / challenges.length * 100);
-  $('#solvedCount').textContent = count; $('#xpTotal').textContent = state.xp; $('#progressPercent').textContent = `${percent}%`; $('#progressBar').style.width = `${percent}%`;
+  $('#solvedCount').textContent = count; $('#challengeTotal').textContent = challenges.length; $('#xpTotal').textContent = state.xp; $('#progressPercent').textContent = `${percent}%`; $('#progressBar').style.width = `${percent}%`;
   $('#progressPercent').title = `${state.xp} XP terkumpul`;
 }
 function renderChallengeList() {
   const query = $('#searchInput').value.trim().toLowerCase();
-  const visible = challenges.filter(ch => (activeFilter === 'all' || ch.category === activeFilter) && `${ch.title} ${ch.category}`.toLowerCase().includes(query));
+  const visible = challenges.filter(ch => (activeFilter === 'all' || String(ch.stage) === activeFilter) && `${ch.title} ${ch.category} tahap ${ch.stage}`.toLowerCase().includes(query));
   $('#challengeList').innerHTML = visible.map(ch => `
     <button class="challenge-item ${ch.id === activeChallenge.id ? 'active' : ''}" data-challenge="${ch.id}">
       <span class="challenge-number">${String(challenges.indexOf(ch)+1).padStart(2,'0')}</span>
@@ -172,6 +748,7 @@ function renderChallengeList() {
 function renderChallenge() {
   const ch = activeChallenge;
   $('#problemNumber').textContent = String(challenges.indexOf(ch)+1).padStart(2,'0');
+  $('#problemStage').textContent = `TAHAP ${ch.stage} · ${ch.category.toUpperCase()}`;
   $('#problemTitle').textContent = ch.title;
   $('#problemDifficulty').textContent = ch.difficulty.toUpperCase();
   $('#problemDifficulty').className = `difficulty ${ch.difficulty.toLowerCase()}`;
@@ -220,21 +797,6 @@ function showOutput(text, kind='') {
   $('#outputView').innerHTML = `<pre class="console-output ${kind}">${escapeHTML(text)}</pre>`;
   setConsole('output');
 }
-function makeJudgeSource(code, testCases) {
-  const calls = testCases.map((test, index) => `    testCase(${index+1}, (${test.expr}));`).join('\n');
-  return `#include <iostream>\n#include <string>\n#include <vector>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\n${code}\n\nint main() {\n    int passed = 0;\n    auto testCase = [&](int id, bool ok) {\n        cout << "__CASE__|" << id << "|" << (ok ? "PASS" : "FAIL") << "\\n";\n        if (ok) ++passed;\n    };\n${calls}\n    cout << "__SUMMARY__|" << passed << "|${testCases.length}" << "\\n";\n    return 0;\n}\n`;
-}
-function parseJudgeOutput(stdout, tests) {
-  const cases=[]; let passed=0; let total=tests.length;
-  for (const line of String(stdout || '').split(/\r?\n/)) {
-    const match=line.match(/^__CASE__\|(\d+)\|(PASS|FAIL)$/);
-    if (match) { const index=Number(match[1])-1; cases.push({index,status:match[2]}); if(match[2]==='PASS')passed++; }
-    const summary=line.match(/^__SUMMARY__\|(\d+)\|(\d+)$/);
-    if(summary){passed=Number(summary[1]);total=Number(summary[2]);}
-  }
-  const extra=String(stdout || '').split(/\r?\n/).filter(line=>!line.startsWith('__CASE__|')&&!line.startsWith('__SUMMARY__|')&&line.trim()).join('\n');
-  return {cases,passed,total,extra};
-}
 function renderTestResults(result, tests, mode) {
   const allPassed = result.passed === result.total && result.total > 0;
   $('#testResultCount').textContent = `${result.passed}/${result.total}`;
@@ -251,12 +813,9 @@ function hideLoading() { $('#loadingOverlay').classList.add('hidden'); }
 function runChallenge(mode) {
   if (compileBusy) return;
   const code = getCode();
-  if (!code.trim()) { toast('Editor masih kosong. Tulis solusi terlebih dahulu.','bad'); return; }
-  const normalizedCode = code.split('\n').map(line => line.trim()).join('\n');
-  const declaresMain = ['int main(', 'int main (', 'auto main(', 'auto main (', 'signed main(']
-    .some(signature => normalizedCode.includes(signature));
-  if (declaresMain) {
-    toast('Jangan tulis main(). Cukup implementasikan function signature pada soal.','bad');
+  if (!code.trim()) { toast('Editor masih kosong. Tulis program terlebih dahulu.','bad'); return; }
+  if (!/\bmain\s*\(/.test(code)) {
+    toast('Program harus memiliki fungsi main(). Ikuti kerangka kode pada editor.','bad');
     return;
   }
 
@@ -275,9 +834,9 @@ function runChallenge(mode) {
   const watchdog = setTimeout(() => {
     if (settled) return;
     settled = true;
-    showOutput('EXECUTION ERROR\\n\\nKompilasi atau eksekusi melebihi batas waktu 90 detik.', 'error');
+    showOutput('TIME LIMIT EXCEEDED\n\nProgram berjalan terlalu lama. Periksa kemungkinan infinite loop.', 'error');
     $('#testResultCount').textContent = 'TLE';
-    toast('Proses melebihi batas waktu.', 'bad');
+    toast('Batas waktu eksekusi terlampaui.', 'bad');
     finish();
   }, 90000);
 
@@ -305,7 +864,7 @@ function runChallenge(mode) {
     if (data.type === 'result' && !data.ok) {
       if (settled) return;
       settled = true;
-      showOutput('COMPILATION ERROR\\n\\n' + (data.compileOutput || data.error || 'Kompilasi gagal.'), 'error');
+      showOutput('COMPILATION ERROR\n\n' + (data.compileOutput || data.error || 'Kompilasi gagal.'), 'error');
       $('#testResultCount').textContent = 'CE';
       toast('Periksa kembali kode C++ kamu.', 'bad');
       finish();
@@ -314,19 +873,25 @@ function runChallenge(mode) {
     if (data.type === 'challenge-result') {
       if (settled) return;
       settled = true;
-      const result = parseJudgeOutput(data.stdout || '', tests);
-      result.extra = [result.extra, data.stderr || data.runtimeError || ''].filter(Boolean).join('\n');
-      if (data.runtimeError) {
-        showOutput('RUNTIME ERROR\n\n' + data.runtimeError, 'error');
-        $('#testResultCount').textContent = 'RE';
-        toast('Program mengalami runtime error.', 'bad');
-        finish();
-        return;
-      }
-      if (data.compileOutput) showOutput('> Compile berhasil.\\n\\n' + data.compileOutput, 'muted');
+      const results = data.tests || [];
+      const result = {
+        passed: results.filter(item => item.passed).length,
+        total: results.length,
+        cases: results.map(item => ({index:item.index,status:item.passed?'PASS':'FAIL'})),
+        extra: results.filter(item => item.runtimeError || item.stderr)
+          .map(item => item.runtimeError || item.stderr).join('\n')
+      };
       const allPassed = renderTestResults(result, tests, mode);
       const duration = Math.round(performance.now() - started);
       $('#runDuration').textContent = duration + ' ms';
+      const visibleOutput = results.filter((item,index) => !tests[index]?.hidden)
+        .map((item,index) => item.actual ? item.actual : '')
+        .filter(Boolean).join('\n');
+      showOutput(
+        (data.compileOutput ? '> Compile berhasil.\n' + data.compileOutput + '\n\n' : '') +
+        (visibleOutput || 'Program selesai. Lihat hasil test untuk detail penilaian.'),
+        allPassed ? 'success' : ''
+      );
 
       if (mode === 'submit' && allPassed) {
         const isNew = !state.solved.includes(activeChallenge.id);
@@ -340,9 +905,9 @@ function runChallenge(mode) {
         }
         toast(isNew ? 'Accepted! +' + activeChallenge.xp + ' XP' : 'Accepted! Challenge sudah pernah diselesaikan.', 'good');
       } else if (allPassed) {
-        toast('Sample test berhasil. Saatnya Submit untuk hidden test.', 'good');
+        toast('Contoh test berhasil. Lanjutkan Submit untuk test berikutnya.', 'good');
       } else {
-        toast('Belum lolos semua test. Periksa kembali logika program.', 'bad');
+        toast('Belum lolos semua test. Periksa kembali programmu.', 'bad');
       }
       finish();
     }
@@ -351,7 +916,7 @@ function runChallenge(mode) {
   worker.onerror = event => {
     if (settled) return;
     settled = true;
-    showOutput('COMPILER WORKER ERROR\\n\\n' + (event.message || 'Worker gagal dimuat.') + '\\nPastikan CDN browsercc dapat diakses.', 'error');
+    showOutput('COMPILER WORKER ERROR\n\n' + (event.message || 'Worker gagal dimuat.') + '\nPeriksa koneksi ke CDN compiler.', 'error');
     $('#testResultCount').textContent = 'ERR';
     toast('Compiler worker gagal dijalankan.', 'bad');
     finish();
@@ -359,12 +924,12 @@ function runChallenge(mode) {
 
   try {
     startTimer();
-    showOutput('> Mengirim source ke compiler WebAssembly…\\n> Clang C++20 sedang disiapkan.', 'muted');
-    worker.postMessage({ source: makeJudgeSource(code, tests), standard: 'c++20' });
+    showOutput('> Mengirim program ke compiler WebAssembly…\n> Clang C++20 sedang disiapkan.', 'muted');
+    worker.postMessage({ source: code, testCases: tests, standard: 'c++20' });
   } catch (error) {
     if (!settled) {
       settled = true;
-      showOutput('EXECUTION ERROR\\n\\n' + (error?.message || error), 'error');
+      showOutput('EXECUTION ERROR\n\n' + (error?.message || error), 'error');
       finish();
     }
   }

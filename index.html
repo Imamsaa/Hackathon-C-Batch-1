@@ -16,10 +16,10 @@
     <header class="topbar">
       <a class="brand" href="./" aria-label="Code Arena home">
         <span class="brand-mark">&lt;/&gt;</span>
-        <span class="brand-copy"><strong>CODE<span>ARENA</span></strong><small>ICT HACKATHON</small></span>
+        <span class="brand-copy"><strong>CODE<span>ARENA</span></strong><small>C++ HACKATHON SMP</small></span>
       </a>
 
-      <div class="event-label"><span class="live-dot"></span> SOLO CHALLENGE <span class="event-divider">/</span> C++ TRACK</div>
+      <div class="event-label"><span class="live-dot"></span> SMP STUDENT CHALLENGE <span class="event-divider">/</span> C++ JALUR BELAJAR</div>
 
       <div class="top-actions">
         <div class="timer-chip"><span class="timer-icon">◷</span><span id="timerDisplay">90:00</span><span class="timer-label">REMAINING</span></div>
@@ -31,7 +31,7 @@
     <div class="workspace">
       <aside class="sidebar panel">
         <div class="sidebar-heading">
-          <div><p class="eyebrow">ARENA MAP</p><h2>Challenges</h2></div>
+          <div><p class="eyebrow">ARENA MAP</p><h2>Tantangan</h2></div>
           <span class="count-pill" id="challengeCount">08</span>
         </div>
 
@@ -41,12 +41,16 @@
           <kbd>/</kbd>
         </label>
 
-        <div class="filter-label">TRACK</div>
-        <nav class="track-filters" aria-label="Filter tantangan">
-          <button class="filter-btn active" data-filter="all"><span class="filter-icon">◈</span> Semua tantangan <span class="filter-count" id="allCount">8</span></button>
-          <button class="filter-btn" data-filter="Dasar"><span class="filter-icon">⌘</span> Fundamental <span class="filter-count">3</span></button>
-          <button class="filter-btn" data-filter="String"><span class="filter-icon">Aa</span> String <span class="filter-count">2</span></button>
-          <button class="filter-btn" data-filter="Array"><span class="filter-icon">▦</span> Array & Logika <span class="filter-count">3</span></button>
+        <div class="filter-label">JALUR BELAJAR</div>
+        <nav class="track-filters" aria-label="Tahap tantangan">
+          <button class="filter-btn active" data-filter="all"><span class="filter-icon">◈</span> Semua tantangan <span class="filter-count" id="allCount">16</span></button>
+          <button class="filter-btn" data-filter="1"><span class="filter-icon">01</span> Dasar & Output</button>
+          <button class="filter-btn" data-filter="2"><span class="filter-icon">02</span> Variabel & Operator</button>
+          <button class="filter-btn" data-filter="3"><span class="filter-icon">03</span> Percabangan</button>
+          <button class="filter-btn" data-filter="4"><span class="filter-icon">04</span> Perulangan</button>
+          <button class="filter-btn" data-filter="5"><span class="filter-icon">05</span> Array & Pola</button>
+          <button class="filter-btn" data-filter="6"><span class="filter-icon">06</span> String & Fungsi</button>
+          <button class="filter-btn" data-filter="7"><span class="filter-icon">07</span> Final Challenge</button>
         </nav>
 
         <div class="challenge-list-heading"><span>DAFTAR SOAL</span><span>XP</span></div>
@@ -56,15 +60,15 @@
           <div class="progress-card">
             <div class="progress-top"><span>PROGRESS KAMU</span><strong id="progressPercent">0%</strong></div>
             <div class="progress-track"><span id="progressBar"></span></div>
-            <p><strong id="solvedCount">0</strong> dari 8 challenge diselesaikan <span class="xp-total">· <strong id="xpTotal">0</strong> XP</span></p>
+            <p><strong id="solvedCount">0</strong> dari <strong id="challengeTotal">16</strong> challenge diselesaikan <span class="xp-total">· <strong id="xpTotal">0</strong> XP</span></p>
           </div>
-          <div class="sidebar-note"><span>✦</span> Think clearly. Code boldly.</div>
+          <div class="sidebar-note"><span>✦</span> Belajar bertahap. Berani mencoba.</div>
         </div>
       </aside>
 
       <main class="problem-panel panel">
         <div class="problem-topline">
-          <div class="breadcrumbs"><span>Challenges</span><span>/</span><strong id="problemNumber">01</strong></div>
+          <div class="breadcrumbs"><span>Tantangan</span><span>/</span><strong id="problemNumber">01</strong><span id="problemStage" class="stage-tag">TAHAP 1 · DASAR & OUTPUT</span></div>
           <button class="icon-btn" id="bookmarkBtn" title="Tandai challenge" aria-label="Tandai challenge">◇</button>
         </div>
 
@@ -77,7 +81,7 @@
         <section id="descriptionTab" class="problem-content">
           <p class="problem-description" id="problemDescription"></p>
           <div class="section-block">
-            <h3>Function Signature</h3>
+            <h3>Materi yang Dilatih</h3>
             <div class="signature-box"><span class="signature-lang">C++</span><code id="functionSignature"></code><button id="copySignatureBtn" class="copy-btn" title="Salin signature">▢</button></div>
           </div>
           <div class="section-block">
@@ -88,7 +92,7 @@
             <h3>Constraints</h3>
             <ul id="constraintsList"></ul>
           </div>
-          <div class="hint-card"><span class="hint-icon">✦</span><p><strong>Catatan:</strong> Buat fungsi sesuai signature di atas. Kamu tidak perlu menulis <code>main()</code>; sistem akan membuat program penguji secara otomatis.</p></div>
+          <div class="hint-card"><span class="hint-icon">✦</span><p><strong>Catatan:</strong> Lengkapi program C++ pada editor. Struktur <code>main()</code> sudah disediakan pada kode awal. Jalankan contoh test sebelum mengirim jawaban.</p></div>
         </section>
         <section id="hintsTab" class="problem-content hidden">
           <div class="hint-unlock"><span>✧</span><h3>Butuh petunjuk?</h3><p id="hintText">Coba pecah masalah menjadi langkah-langkah kecil, lalu pikirkan kasus paling sederhana terlebih dahulu.</p></div>
@@ -126,7 +130,7 @@
       </section>
     </div>
 
-    <footer class="page-footer"><span>CODEARENA <b>·</b> Built for curious minds</span><span>POWERED BY <strong>WEBASSEMBLY</strong> <i class="footer-dot"></i> C++20</span></footer>
+    <footer class="page-footer"><span>CODEARENA <b>·</b> Dirancang untuk pelajar SMP</span><span>POWERED BY <strong>WEBASSEMBLY</strong> <i class="footer-dot"></i> C++20</span></footer>
   </div>
   <div id="toastRegion" class="toast-region" aria-live="polite"></div>
   <div id="loadingOverlay" class="loading-overlay hidden">
