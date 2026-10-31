@@ -1538,11 +1538,6 @@ function bindEvents() {
   $('#startTimerBtn').addEventListener('click',startTimer);
   $('#breakBtn').addEventListener('click',toggleBreak);
   $('#resetCodeBtn').addEventListener('click',()=>{if(!requireSession())return;setCode(activeChallenge.starter);persistDraft();toast('Kode dikembalikan ke template awal.');});
-  $('#downloadCodeBtn').addEventListener('click',()=>{
-    if(!requireSession())return;
-    const blob=new Blob([getCode()],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`${activeChallenge.id}.cpp`;a.click();URL.revokeObjectURL(url);toast('File C++ berhasil disiapkan untuk diunduh.','good');
-  });
-  $('#copySignatureBtn').addEventListener('click',async()=>{if(!requireSession())return;try{await navigator.clipboard.writeText(activeChallenge.signature);toast('Function signature disalin.','good');}catch{toast('Clipboard tidak tersedia di browser ini.','bad');}});
   $('#bookmarkBtn').addEventListener('click',()=>{
     if(!requireSession())return;
     const index=state.bookmarks.indexOf(activeChallenge.id);if(index>=0)state.bookmarks.splice(index,1);else state.bookmarks.push(activeChallenge.id);saveProgress();renderChallenge();
