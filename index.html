@@ -7,7 +7,7 @@
   <meta name="description" content="Code Arena — C++ Hackathon Challenge Platform" />
   <title>Code Arena — C++ Hackathon</title>
   <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-  <link rel="stylesheet" href="./css/style.css?v=anti-screenshot-1" />
+  <link rel="stylesheet" href="./css/style.css?v=stdin-support-1" />
   <!-- Provides COOP/COEP headers on GitHub Pages for WebAssembly threads. -->
   <script src="./coi-serviceworker.js?v=browsercc-worker-2"></script>
   <script type="importmap">
@@ -142,10 +142,18 @@
 
         <div class="console-panel">
           <div class="console-header">
-            <div class="console-tabs"><button class="console-tab active" data-console-tab="output">OUTPUT</button><button class="console-tab" data-console-tab="tests">TEST RESULTS <span class="console-count" id="testResultCount">—</span></button></div>
+            <div class="console-tabs"><button class="console-tab active" data-console-tab="input">STDIN</button><button class="console-tab" data-console-tab="output">OUTPUT</button><button class="console-tab" data-console-tab="tests">TEST RESULTS <span class="console-count" id="testResultCount">—</span></button></div>
             <div class="console-actions"><span id="runDuration"></span><button class="clear-btn" id="clearOutputBtn">Clear</button></div>
           </div>
-          <div id="outputView" class="console-view">
+          <div id="inputView" class="console-view stdin-view">
+            <div class="stdin-toolbar">
+              <div><strong>STANDARD INPUT</strong><small>Masukkan data yang akan dibaca oleh cin atau getline.</small></div>
+              <button id="useSampleInputBtn" class="clear-btn" type="button">Gunakan contoh soal</button>
+            </div>
+            <textarea id="stdinInput" class="stdin-input" rows="4" spellcheck="false" aria-label="Input program C++" placeholder="Ketik input program di sini. Pisahkan setiap input dengan Enter."></textarea>
+            <div class="stdin-help">Setiap baris dibaca sesuai urutan program. Untuk cin &gt;&gt; lalu getline(), perhatikan newline dan gunakan cin.ignore() bila diperlukan.</div>
+          </div>
+          <div id="outputView" class="console-view hidden">
             <div class="empty-console"><span class="terminal-glyph">›_</span><div><strong>Output terminal</strong><p>Jalankan kode untuk melihat hasil kompilasi dan output program.</p></div></div>
           </div>
           <div id="testsView" class="console-view hidden">
@@ -177,6 +185,6 @@
   <div id="loadingOverlay" class="loading-overlay hidden">
     <div class="loading-card"><div class="loader-ring"></div><p class="eyebrow">WASM COMPILER</p><h2 id="loadingTitle">Menyiapkan compiler...</h2><p id="loadingMessage">Menginisialisasi lingkungan C++ di browser.</p><div class="loading-progress"><span id="loadingProgress"></span></div><small>Proses pertama kali dapat memerlukan waktu lebih lama.</small></div>
   </div>
-  <script type="module" src="./js/app.js?v=anti-screenshot-1"></script>
+  <script type="module" src="./js/app.js?v=stdin-support-1"></script>
 </body>
 </html>

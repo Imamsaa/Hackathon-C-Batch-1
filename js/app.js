@@ -710,7 +710,7 @@ let compiler = null;
 let compileBusy = false;
 let lastResult = null;
 let timerInterval = null;
-let activeConsoleTab = 'output';
+let activeConsoleTab = 'input';
 let cmEditor = null;
 let EditorViewRef = null;
 let editorEditableCompartment = null;
@@ -798,7 +798,7 @@ function updateSessionLock() {
     cmEditor.dispatch({effects: editorEditableCompartment.reconfigure(EditorViewRef.editable.of(!locked))});
   }
 
-  ['runBtn','submitBtn','resetCodeBtn','downloadCodeBtn','bookmarkBtn','copySignatureBtn','searchInput']
+  ['runBtn','submitBtn','resetCodeBtn','downloadCodeBtn','bookmarkBtn','copySignatureBtn','searchInput','stdinInput','useSampleInputBtn']
     .forEach(id => { const element = document.getElementById(id); if (element) element.disabled = locked; });
   document.querySelectorAll('[data-filter],[data-tab]').forEach(button => { button.disabled = locked; });
 
@@ -830,7 +830,7 @@ function updateSessionLock() {
 function loadProgress() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    return { solved: Array.isArray(saved.solved) ? saved.solved : [], drafts: saved.drafts || {}, bookmarks: saved.bookmarks || [], attempts: saved.attempts || 0, xp: saved.xp || 0, lastTaskId: saved.lastTaskId || null };
+    return { solved: Array.isArray(saved.solved) ? saved.solved : [], drafts: saved.drafts || {}, stdinDrafts: saved.stdinDrafts && typeof saved.stdinDrafts === 'object' ? saved.stdinDrafts : {}, bookmarks: saved.bookmarks || [], attempts: saved.attempts || 0, xp: saved.xp || 0, lastTaskId: saved.lastTaskId || null };
   } catch { return { solved: [], drafts: {}, bookmarks: [], attempts: 0, xp: 0, lastTaskId: null }; }
 }
 function saveProgress() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
@@ -916,6 +916,7 @@ function toast(message, kind = '') {
 function setConsole(tab) {
   activeConsoleTab = tab;
   document.querySelectorAll('[data-console-tab]').forEach(btn => btn.classList.toggle('active', btn.dataset.consoleTab === tab));
+  $('#inputView').classList.toggle('hidden', tab !== 'input');
   $('#outputView').classList.toggle('hidden', tab !== 'output');
   $('#testsView').classList.toggle('hidden', tab !== 'tests');
 }
@@ -958,14 +959,21 @@ function renderChallenge() {
   $('#bookmarkBtn').textContent = state.bookmarks.includes(ch.id) ? '◆' : '◇';
   const draft = state.drafts[ch.id] || ch.starter;
   setCode(draft);
+  const savedStdin = Object.prototype.hasOwnProperty.call(state.stdinDrafts, ch.id);
+  const sampleInput = ch.examples?.[0]?.input;
+  $('#stdinInput').value = savedStdin
+    ? String(state.stdinDrafts[ch.id] ?? '')
+    : (sampleInput && sampleInput !== 'Tidak ada input' ? sampleInput : '');
   updateCursorInfo();
   renderChallengeList(); updateProgress();
   clearConsole();
+  setConsole('input');
 }
 function selectChallenge(id) {
   if (!requireSession()) return;
   const next = challenges.find(ch => ch.id === id); if (!next) return;
   state.drafts[activeChallenge.id] = getCode();
+  state.stdinDrafts[activeChallenge.id] = $('#stdinInput').value;
   activeChallenge = next; state.lastTaskId = id; saveProgress(); renderChallenge();
   document.querySelectorAll('[data-tab]').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === 'description'));
   $('#descriptionTab').classList.remove('hidden'); $('#hintsTab').classList.add('hidden');
@@ -1258,6 +1266,12 @@ function persistDraft() {
   saveProgress();
   if ($('#editorStatus')) $('#editorStatus').textContent = 'All changes saved';
 }
+function persistStdinDraft() {
+  if (!state.stdinDrafts || typeof state.stdinDrafts !== 'object') state.stdinDrafts = {};
+  state.stdinDrafts[activeChallenge.id] = $('#stdinInput').value;
+  saveProgress();
+}
+
 function initEditor() {
   installEditorClipboardGuards();
   const input = $('#codeFallback');
@@ -1312,7 +1326,8 @@ function runChallenge(mode) {
   $('#submitBtn').disabled = true;
   $('#runBtn').innerHTML = '<span>◌</span> Compiling...';
   $('#submitBtn').textContent = 'Checking...';
-  const tests = mode === 'submit' ? activeChallenge.tests : activeChallenge.tests.filter(test => !test.hidden);
+  const tests = mode === 'submit' ? activeChallenge.tests : [];
+  const stdin = mode === 'run' ? $('#stdinInput').value : '';
   const started = performance.now();
   state.attempts++;
   saveProgress();
@@ -1355,6 +1370,26 @@ function runChallenge(mode) {
       showOutput('COMPILATION ERROR\n\n' + (data.compileOutput || data.error || 'Kompilasi gagal.'), 'error');
       $('#testResultCount').textContent = 'CE';
       toast('Periksa kembali kode C++ kamu.', 'bad');
+      finish();
+      return;
+    }
+    if (data.type === 'stdin-result') {
+      if (settled) return;
+      settled = true;
+      const duration = Math.round(performance.now() - started);
+      $('#runDuration').textContent = duration + ' ms';
+      $('#testResultCount').textContent = '—';
+      const sections = [];
+      if (data.stdout) sections.push(data.stdout);
+      else sections.push('(Program selesai tanpa menghasilkan output.)');
+      if (data.stderr) sections.push('[STDERR]\\n' + data.stderr);
+      if (data.runtimeError) sections.push('[RUNTIME ERROR]\\n' + data.runtimeError);
+      showOutput(
+        (data.compileOutput ? '> Compile berhasil.\\n' + data.compileOutput + '\\n\\n' : '') + sections.join('\\n\\n'),
+        data.runtimeError ? 'error' : ''
+      );
+      if (data.runtimeError) toast('Program berhenti karena runtime error.', 'bad');
+      else toast('Program berhasil dijalankan dengan input STDIN.', 'good');
       finish();
       return;
     }
@@ -1412,8 +1447,9 @@ function runChallenge(mode) {
 
   try {
     startTimer();
+    setConsole('output');
     showOutput('> Mengirim program ke compiler WebAssembly…\n> Clang C++20 sedang disiapkan.', 'muted');
-    worker.postMessage({ source: code, testCases: tests, standard: 'c++20' });
+    worker.postMessage({ source: code, testCases: tests, standard: 'c++20', runMode: mode === 'run' ? 'stdin' : 'tests', stdin });
   } catch (error) {
     if (!settled) {
       settled = true;
@@ -1569,6 +1605,18 @@ function bindEvents() {
     $('#descriptionTab').classList.toggle('hidden',tab!=='description'); $('#hintsTab').classList.toggle('hidden',tab!=='hints');
   }));
   document.querySelectorAll('[data-console-tab]').forEach(btn=>btn.addEventListener('click',()=>setConsole(btn.dataset.consoleTab)));
+  $('#stdinInput').addEventListener('input', () => {
+    if (!requireSession()) return;
+    persistStdinDraft();
+  });
+  $('#useSampleInputBtn').addEventListener('click', () => {
+    if (!requireSession()) return;
+    const sample = activeChallenge.examples?.[0]?.input;
+    $('#stdinInput').value = sample && sample !== 'Tidak ada input' ? sample : '';
+    persistStdinDraft();
+    toast(sample && sample !== 'Tidak ada input' ? 'Contoh input berhasil dimuat.' : 'Soal ini tidak membutuhkan contoh input.');
+    $('#stdinInput').focus();
+  });
   $('#runBtn').addEventListener('click',()=>runChallenge('run'));
   $('#submitBtn').addEventListener('click',()=>runChallenge('submit'));
   $('#startTimerBtn').addEventListener('click',startTimer);

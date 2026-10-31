@@ -2,7 +2,7 @@ import { compile } from "https://cdn.jsdelivr.net/npm/browsercc@0.1.1/dist/index
 import { WASI, File, OpenFile, ConsoleStdout } from "https://esm.sh/@bjorn3/browser_wasi_shim@0.4.2";
 
 self.onmessage = async (event) => {
-  const { source, testCases = [], standard = "c++20" } = event.data || {};
+  const { source, testCases = [], standard = "c++20", runMode = "tests", stdin = "" } = event.data || {};
   let compileOutput = "";
 
   try {
@@ -20,6 +20,43 @@ self.onmessage = async (event) => {
         ok: false,
         compileOutput: compileOutput || "Kompilasi gagal. Tidak ada modul WebAssembly yang dihasilkan.",
         tests: []
+      });
+      return;
+    }
+
+    if (runMode === "stdin") {
+      const encoder = new TextEncoder();
+      const inputText = String(stdin ?? "");
+      const stdoutParts = [];
+      const stderrParts = [];
+      const stdoutDecoder = new TextDecoder("utf-8");
+      const stderrDecoder = new TextDecoder("utf-8");
+      const fds = [
+        new OpenFile(new File(encoder.encode(inputText))),
+        new ConsoleStdout(bytes => stdoutParts.push(stdoutDecoder.decode(bytes, { stream: true }))),
+        new ConsoleStdout(bytes => stderrParts.push(stderrDecoder.decode(bytes, { stream: true })))
+      ];
+      const wasi = new WASI([], [], fds);
+      let runtimeError = "";
+
+      try {
+        const instance = await WebAssembly.instantiate(result.module, {
+          wasi_snapshot_preview1: wasi.wasiImport
+        });
+        wasi.start(instance);
+      } catch (error) {
+        runtimeError = error?.message || String(error);
+      }
+
+      stdoutParts.push(stdoutDecoder.decode());
+      stderrParts.push(stderrDecoder.decode());
+      self.postMessage({
+        type: "stdin-result",
+        ok: !runtimeError,
+        compileOutput,
+        stdout: stdoutParts.join(""),
+        stderr: stderrParts.join(""),
+        runtimeError
       });
       return;
     }
