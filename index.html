@@ -24,6 +24,8 @@
       <div class="top-actions">
         <div class="timer-chip"><span class="timer-icon">◷</span><span id="timerDisplay">90:00</span><span class="timer-label">REMAINING</span></div>
         <button id="startTimerBtn" class="btn btn-quiet btn-small">Mulai Sesi</button>
+        <span id="breakCountChip" class="break-count" hidden>Istirahat 0/2</span>
+        <button id="breakBtn" class="btn btn-break btn-small" hidden disabled>☕ Mulai Istirahat</button>
         <div class="avatar" title="Peserta">P</div>
       </div>
     </header>
@@ -111,9 +113,9 @@
           <div id="sessionLockOverlay" class="session-lock-overlay">
             <div class="session-lock-card">
               <span class="session-lock-icon">◷</span>
-              <strong>Sesi belum dimulai</strong>
-              <p>Soal pertama bisa kamu lihat terlebih dahulu. Editor dan tantangan lainnya akan terbuka setelah kamu menekan <b>Mulai Sesi</b>.</p>
-              <small>Waktu hackathon mulai dihitung saat sesi dibuka.</small>
+              <strong id="sessionLockTitle">Sesi belum dimulai</strong>
+              <p id="sessionLockMessage">Soal pertama bisa kamu lihat terlebih dahulu. Editor dan tantangan lainnya akan terbuka setelah kamu menekan <b>Mulai Sesi</b>.</p>
+              <small id="sessionLockNote">Waktu hackathon mulai dihitung saat sesi dibuka.</small>
             </div>
           </div>
         </div>

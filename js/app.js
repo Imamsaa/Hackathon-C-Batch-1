@@ -3,6 +3,7 @@
 const SESSION_SECONDS = 90 * 60;
 const STORAGE_KEY = 'codearena-cpp-progress-v1';
 const START_KEY = 'codearena-cpp-start-v1';
+const BREAK_KEY = 'codearena-cpp-breaks-v1';
 
 const challenges = [
   {
@@ -710,19 +711,77 @@ let lastResult = null;
 let timerInterval = null;
 let activeConsoleTab = 'output';
 let sessionStarted = Boolean(Number(localStorage.getItem(START_KEY)));
+let breakState = loadBreakState();
+
+function loadBreakState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(BREAK_KEY) || '{}');
+    return {
+      used: Math.max(0, Math.min(2, Number(saved.used) || 0)),
+      active: Boolean(saved.active),
+      pausedRemaining: Number.isFinite(Number(saved.pausedRemaining)) ? Math.max(0, Math.min(SESSION_SECONDS, Number(saved.pausedRemaining))) : null
+    };
+  } catch {
+    return { used: 0, active: false, pausedRemaining: null };
+  }
+}
+
+function saveBreakState() {
+  localStorage.setItem(BREAK_KEY, JSON.stringify(breakState));
+}
 
 function requireSession() {
-  if (sessionStarted) return true;
-  toast('Tekan Mulai Sesi terlebih dahulu untuk membuka tantangan.', 'bad');
-  return false;
+  if (!sessionStarted) {
+    toast('Tekan Mulai Sesi terlebih dahulu untuk membuka tantangan.', 'bad');
+    return false;
+  }
+  if (breakState.active) {
+    toast('Kamu sedang istirahat. Akhiri istirahat untuk melanjutkan.', 'bad');
+    return false;
+  }
+  return true;
+}
+
+function getRemainingSeconds() {
+  if (breakState.active && breakState.pausedRemaining !== null) {
+    return breakState.pausedRemaining;
+  }
+  const startedAt = Number(localStorage.getItem(START_KEY));
+  if (!startedAt) return SESSION_SECONDS;
+  return Math.max(0, SESSION_SECONDS - Math.floor((Date.now() - startedAt) / 1000));
+}
+
+function updateTimerDisplay() {
+  const remaining = getRemainingSeconds();
+  const mins = String(Math.floor(remaining / 60)).padStart(2, '0');
+  const secs = String(remaining % 60).padStart(2, '0');
+  $('#timerDisplay').textContent = `${mins}:${secs}`;
+  $('#timerDisplay').style.color = remaining === 0 ? 'var(--red)' : '';
 }
 
 function updateSessionLock() {
-  const locked = !sessionStarted;
+  const preStart = !sessionStarted;
+  const onBreak = sessionStarted && breakState.active;
+  const locked = preStart || onBreak;
+
   const startButton = $('#startTimerBtn');
   if (startButton) {
-    startButton.textContent = locked ? 'Mulai Sesi' : 'Sesi Aktif';
-    startButton.disabled = !locked;
+    startButton.textContent = preStart ? 'Mulai Sesi' : 'Sesi Aktif';
+    startButton.disabled = !preStart;
+  }
+
+  const breakButton = $('#breakBtn');
+  if (breakButton) {
+    breakButton.hidden = preStart;
+    breakButton.disabled = !onBreak && breakState.used >= 2;
+    breakButton.textContent = onBreak ? '▶ Akhiri Istirahat' : '☕ Mulai Istirahat';
+    breakButton.classList.toggle('is-resume', onBreak);
+  }
+  const breakCount = $('#breakCountChip');
+  if (breakCount) {
+    breakCount.hidden = preStart;
+    breakCount.textContent = `Istirahat ${breakState.used}/2`;
+    breakCount.classList.toggle('break-count-empty', breakState.used >= 2);
   }
 
   const editorInput = $('#codeFallback');
@@ -734,14 +793,29 @@ function updateSessionLock() {
   ['runBtn','submitBtn','resetCodeBtn','downloadCodeBtn','bookmarkBtn','copySignatureBtn','searchInput']
     .forEach(id => { const element = document.getElementById(id); if (element) element.disabled = locked; });
   document.querySelectorAll('[data-filter],[data-tab]').forEach(button => { button.disabled = locked; });
+
   const overlay = $('#sessionLockOverlay');
-  if (overlay) overlay.classList.toggle('hidden', !locked);
+  if (overlay) {
+    overlay.classList.toggle('hidden', !locked);
+    const title = $('#sessionLockTitle');
+    const message = $('#sessionLockMessage');
+    const note = $('#sessionLockNote');
+    if (title) title.textContent = onBreak ? 'Kamu sedang istirahat' : 'Sesi belum dimulai';
+    if (message) message.textContent = onBreak
+      ? 'Tantangan, navigasi soal, dan editor dikunci sementara. Klik Akhiri Istirahat untuk kembali mengerjakan.'
+      : 'Soal pertama bisa kamu lihat terlebih dahulu. Editor dan tantangan lainnya akan terbuka setelah kamu menekan Mulai Sesi.';
+    if (note) note.textContent = onBreak
+      ? `Waktu kompetisi dijeda · Kesempatan istirahat terpakai ${breakState.used} dari 2`
+      : 'Waktu hackathon mulai dihitung saat sesi dibuka.';
+  }
   const editorHost = $('#editorHost');
   if (editorHost) editorHost.classList.toggle('session-locked', locked);
   const challengeList = $('#challengeList');
   if (challengeList) challengeList.classList.toggle('session-locked', locked);
   const editorStatus = $('#editorStatus');
-  if (editorStatus) editorStatus.textContent = locked ? 'Terkunci · Mulai sesi untuk coding' : 'All changes saved';
+  if (editorStatus) editorStatus.textContent = preStart
+    ? 'Terkunci · Mulai sesi untuk coding'
+    : onBreak ? 'Terkunci · Sedang istirahat' : 'All changes saved';
   renderChallengeList();
 }
 
@@ -769,13 +843,14 @@ function updateProgress() {
 }
 function renderChallengeList() {
   const query = $('#searchInput').value.trim().toLowerCase();
+  const locked = !sessionStarted || breakState.active;
   const visible = challenges.filter(ch => (activeFilter === 'all' || String(ch.stage) === activeFilter) && `${ch.title} ${ch.category} tahap ${ch.stage}`.toLowerCase().includes(query));
   $('#challengeList').innerHTML = visible.map(ch => `
-    <button class="challenge-item ${ch.id === activeChallenge.id ? 'active' : ''} ${sessionStarted ? '' : 'locked'}" data-challenge="${ch.id}" ${sessionStarted ? '' : 'disabled aria-disabled="true"'}>
+    <button class="challenge-item ${ch.id === activeChallenge.id ? 'active' : ''} ${locked ? 'locked' : ''}" data-challenge="${ch.id}" ${locked ? 'disabled aria-disabled="true"' : ''}>
       <span class="challenge-number">${String(challenges.indexOf(ch)+1).padStart(2,'0')}</span>
       <span class="challenge-name">${escapeHTML(ch.title)}</span>
       <span class="challenge-xp">${ch.xp}</span>
-      <span class="challenge-check">${sessionStarted ? (state.solved.includes(ch.id) ? '✓' : '') : '🔒'}</span>
+      <span class="challenge-check">${locked ? '🔒' : (state.solved.includes(ch.id) ? '✓' : '')}</span>
     </button>`).join('') || '<div class="empty-console"><div><strong>Challenge tidak ditemukan</strong><p>Coba kata kunci lain.</p></div></div>';
   $('#challengeCount').textContent = String(visible.length).padStart(2,'0');
   document.querySelectorAll('[data-challenge]').forEach(btn => btn.addEventListener('click', () => selectChallenge(btn.dataset.challenge)));
@@ -818,7 +893,7 @@ function persistDraft() { state.drafts[activeChallenge.id] = getCode(); state.la
 function initEditor() {
   const input = $('#codeFallback');
   input.value = state.drafts[activeChallenge.id] || activeChallenge.starter;
-  input.readOnly = !sessionStarted;
+  input.readOnly = !sessionStarted || breakState.active;
   input.addEventListener('input', () => {
     if (!requireSession()) return;
     persistDraft();
@@ -973,19 +1048,80 @@ function runChallenge(mode) {
   }
 }
 function startTimer() {
-  let startedAt=Number(localStorage.getItem(START_KEY));
-  if (!startedAt) { startedAt=Date.now(); localStorage.setItem(START_KEY,String(startedAt)); }
+  let startedAt = Number(localStorage.getItem(START_KEY));
+  if (!startedAt) {
+    startedAt = Date.now();
+    localStorage.setItem(START_KEY, String(startedAt));
+  }
   sessionStarted = true;
   updateSessionLock();
+  if (breakState.active) {
+    updateTimerDisplay();
+    return;
+  }
   if (timerInterval) return;
-  $('#startTimerBtn').textContent='Sesi Aktif'; $('#startTimerBtn').disabled=true;
-  const tick=()=>{
-    const remaining=Math.max(0,SESSION_SECONDS-Math.floor((Date.now()-startedAt)/1000));
-    const mins=String(Math.floor(remaining/60)).padStart(2,'0'); const secs=String(remaining%60).padStart(2,'0');
-    $('#timerDisplay').textContent=`${mins}:${secs}`;
-    if(remaining===0){clearInterval(timerInterval);timerInterval=null;$('#timerDisplay').style.color='var(--red)';toast('Waktu sesi hackathon telah habis.');}
+
+  $('#startTimerBtn').textContent = 'Sesi Aktif';
+  $('#startTimerBtn').disabled = true;
+  const tick = () => {
+    updateTimerDisplay();
+    if (getRemainingSeconds() <= 0) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      toast('Waktu sesi hackathon telah habis.');
+    }
   };
-  tick(); timerInterval=setInterval(tick,1000);
+  tick();
+  if (getRemainingSeconds() > 0) timerInterval = setInterval(tick, 1000);
+}
+
+function startBreak() {
+  if (!requireSession()) return;
+  if (compileBusy) {
+    toast('Tunggu proses kompilasi selesai sebelum istirahat.', 'bad');
+    return;
+  }
+  if (breakState.used >= 2) {
+    toast('Dua kesempatan istirahat sudah digunakan.', 'bad');
+    return;
+  }
+  const remaining = getRemainingSeconds();
+  if (remaining <= 0) {
+    toast('Waktu kompetisi sudah habis. Istirahat tidak dapat dimulai.', 'bad');
+    return;
+  }
+
+  breakState.used += 1;
+  breakState.active = true;
+  breakState.pausedRemaining = remaining;
+  saveBreakState();
+
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  updateTimerDisplay();
+  updateSessionLock();
+  toast(`Istirahat dimulai. Kesempatan tersisa: ${2 - breakState.used}.`, 'good');
+}
+
+function endBreak() {
+  if (!sessionStarted || !breakState.active) return;
+  const remaining = breakState.pausedRemaining ?? getRemainingSeconds();
+  const elapsedSeconds = SESSION_SECONDS - remaining;
+  localStorage.setItem(START_KEY, String(Date.now() - elapsedSeconds * 1000));
+  breakState.active = false;
+  breakState.pausedRemaining = null;
+  saveBreakState();
+
+  updateSessionLock();
+  startTimer();
+  toast('Istirahat selesai. Waktu kompetisi dilanjutkan.', 'good');
+}
+
+function toggleBreak() {
+  if (breakState.active) endBreak();
+  else startBreak();
 }
 function bindEvents() {
   document.querySelectorAll('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>{
@@ -1002,6 +1138,7 @@ function bindEvents() {
   $('#runBtn').addEventListener('click',()=>runChallenge('run'));
   $('#submitBtn').addEventListener('click',()=>runChallenge('submit'));
   $('#startTimerBtn').addEventListener('click',startTimer);
+  $('#breakBtn').addEventListener('click',toggleBreak);
   $('#resetCodeBtn').addEventListener('click',()=>{if(!requireSession())return;setCode(activeChallenge.starter);persistDraft();toast('Kode dikembalikan ke template awal.');});
   $('#downloadCodeBtn').addEventListener('click',()=>{
     if(!requireSession())return;
@@ -1024,6 +1161,9 @@ function init() {
   bindEvents();
   updateSessionLock();
   renderChallenge();
-  if(sessionStarted) startTimer();
+  if(sessionStarted) {
+    if (breakState.active) updateTimerDisplay();
+    else startTimer();
+  }
 }
 init();

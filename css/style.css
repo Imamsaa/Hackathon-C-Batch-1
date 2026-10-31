@@ -23,3 +23,16 @@
 .challenge-list.session-locked{opacity:.86}
 button:disabled{cursor:not-allowed}
 @media(max-width:680px){.session-lock-card{padding:18px 15px}.session-lock-card p{font-size:10px}}
+
+/* Two-use participant break control. */
+.btn-break{padding:9px 11px;color:#d7e6f3;background:#192b3d;border:1px solid #334a60;font-size:10px}
+.btn-break:hover{background:#233a50;border-color:#4a657f}
+.btn-break.is-resume{color:#17210e;background:var(--green);border-color:var(--green)}
+.break-count{display:inline-flex;align-items:center;padding:7px 8px;border:1px solid var(--line);border-radius:7px;color:#aebdcb;background:#101b29;font:9px var(--mono);white-space:nowrap}
+.break-count-empty{color:var(--muted-2);opacity:.75}
+.break-count[hidden],.btn-break[hidden]{display:none!important}
+@media(max-width:680px){
+  .top-actions{gap:5px}
+  .btn-break{padding:8px 7px;font-size:9px}
+  .break-count{padding:6px 5px;font-size:8px}
+}
