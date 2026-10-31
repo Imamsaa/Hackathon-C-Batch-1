@@ -1108,6 +1108,60 @@ async function enhanceWithCodeMirror(input, hasEdited) {
   }
 }
 
+function isClipboardShortcut(event) {
+  const key = String(event.key || '').toLowerCase();
+  const modifier = event.ctrlKey || event.metaKey;
+  return (modifier && ['c', 'v', 'x'].includes(key))
+    || (event.shiftKey && key === 'insert')
+    || (event.ctrlKey && key === 'insert');
+}
+
+function installEditorClipboardGuards() {
+  const host = $('#editorHost');
+  if (!host || host.dataset.clipboardGuard === 'installed') return;
+  host.dataset.clipboardGuard = 'installed';
+
+  host.addEventListener('keydown', event => {
+    if (!isClipboardShortcut(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+    toast('Copy, cut, dan paste dinonaktifkan selama hackathon. Ketik kode secara mandiri.', 'bad');
+  }, true);
+
+  ['copy', 'cut', 'paste'].forEach(type => {
+    host.addEventListener(type, event => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (type === 'paste') {
+        toast('Paste dinonaktifkan. Silakan ketik kode secara mandiri.', 'bad');
+      }
+    }, true);
+  });
+
+  host.addEventListener('beforeinput', event => {
+    if (event.inputType === 'insertFromPaste' || event.inputType === 'insertFromDrop') {
+      event.preventDefault();
+      event.stopPropagation();
+      toast('Memasukkan kode melalui clipboard atau drop dinonaktifkan.', 'bad');
+    }
+  }, true);
+
+  host.addEventListener('contextmenu', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    toast('Menu klik-kanan dinonaktifkan pada editor selama hackathon.', 'bad');
+  }, true);
+
+  ['dragover', 'drop'].forEach(type => {
+    host.addEventListener(type, event => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (type === 'drop') toast('Drag-and-drop kode dinonaktifkan selama hackathon.', 'bad');
+    }, true);
+  });
+}
+
 function getCode() {
   return cmEditor ? cmEditor.state.doc.toString() : ($('#codeFallback')?.value || '');
 }
@@ -1128,6 +1182,7 @@ function persistDraft() {
   if ($('#editorStatus')) $('#editorStatus').textContent = 'All changes saved';
 }
 function initEditor() {
+  installEditorClipboardGuards();
   const input = $('#codeFallback');
   input.value = state.drafts[activeChallenge.id] || activeChallenge.starter;
   input.readOnly = !sessionStarted || breakState.active;

@@ -59,3 +59,7 @@ button:disabled{cursor:not-allowed}
 .editor-host.session-locked .cm-editor{filter:blur(1.2px);opacity:.38;pointer-events:none;user-select:none}
 .editor-footer b{font-weight:400;color:#b6c3d0}
 @media(max-width:680px){.shortcut-hint{font-size:7px;letter-spacing:0}.shortcut-hint kbd{font-size:7px}}
+
+/* Clipboard restrictions are scoped to the coding workspace. */
+.editor-policy-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;border:1px solid rgba(244,198,111,.22);border-radius:5px;background:rgba(244,198,111,.06);color:#d9bd82;font:8px var(--mono);letter-spacing:.55px;white-space:nowrap}
+@media(max-width:680px){.editor-policy-chip{font-size:7px;padding:4px 5px;letter-spacing:0}.editor-tools{gap:7px}}
