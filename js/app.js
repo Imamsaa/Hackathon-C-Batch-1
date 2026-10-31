@@ -1507,7 +1507,7 @@ function bindEvents() {
   // Best-effort deterrent for screenshot and print shortcuts during an active session.
   // The operating system may intercept its own capture shortcuts before the page can see them.
   document.addEventListener('keydown', event => {
-    if (!sessionStarted || breakState.active) return;
+    if (!sessionStarted) return;
     const shortcut = isScreenshotShortcut(event);
     if (!shortcut.blocked) return;
     event.preventDefault();
