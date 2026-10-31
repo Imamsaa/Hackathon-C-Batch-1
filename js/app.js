@@ -709,6 +709,7 @@ let activeFilter = 'all';
 let editor = null;
 let compiler = null;
 let compileBusy = false;
+let activeRunCleanup = null;
 let lastResult = null;
 let timerInterval = null;
 let activeConsoleTab = 'input';
@@ -776,6 +777,7 @@ function finishSession(showNotice = true) {
     clearInterval(timerInterval);
     timerInterval = null;
   }
+  if (activeRunCleanup) activeRunCleanup();
   updateTimerDisplay();
   updateSessionLock();
   if (showNotice) toast('Waktu hackathon telah habis. Semua tantangan dikunci.', 'bad');
@@ -1377,13 +1379,16 @@ function runChallenge(mode) {
   function finish() {
     clearTimeout(watchdog);
     worker.terminate();
+    if (activeRunCleanup === finish) activeRunCleanup = null;
     compileBusy = false;
-    $('#runBtn').disabled = false;
-    $('#submitBtn').disabled = false;
+    const locked = !sessionStarted || breakState.active || sessionFinished;
+    $('#runBtn').disabled = locked;
+    $('#submitBtn').disabled = locked;
     $('#runBtn').innerHTML = '<span>▶</span> Run Code';
     $('#submitBtn').innerHTML = '<span>✓</span> Submit <span class="submit-arrow">↗</span>';
     persistDraft();
   }
+  activeRunCleanup = finish;
 
   worker.onmessage = event => {
     const data = event.data || {};
