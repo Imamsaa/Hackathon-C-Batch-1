@@ -10,6 +10,19 @@
   <link rel="stylesheet" href="./css/style.css" />
   <!-- Provides COOP/COEP headers on GitHub Pages for WebAssembly threads. -->
   <script src="./coi-serviceworker.js?v=browsercc-worker-2"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "@codemirror/": "https://esm.sh/*@codemirror/",
+        "@lezer/": "https://esm.sh/*@lezer/",
+        "@marijn/find-cluster-break": "https://esm.sh/@marijn/find-cluster-break",
+        "codemirror": "https://esm.sh/*codemirror",
+        "crelt": "https://esm.sh/crelt",
+        "style-mod": "https://esm.sh/style-mod",
+        "w3c-keyname": "https://esm.sh/w3c-keyname"
+      }
+    }
+  </script>
 </head>
 <body>
   <div class="app-shell">
@@ -118,7 +131,7 @@
           </div>
         </div>
 
-        <div class="editor-footer"><span>Ln <b id="lineCount">1</b>, Col 1</span><span>UTF-8 <i></i> C++20</span><span class="shortcut-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> Run</span></div>
+        <div class="editor-footer"><span>Ln <b id="lineCount">1</b>, Col <b id="columnCount">1</b> <i></i> <b id="totalLines">1</b> lines</span><span>UTF-8 <i></i> C++20</span><span class="shortcut-hint"><kbd>Tab</kbd> Indent <i></i> <kbd>Ctrl</kbd>+<kbd>/</kbd> Comment <i></i> <kbd>Ctrl</kbd>+<kbd>Enter</kbd> Run</span></div>
 
         <div class="console-panel">
           <div class="console-header">

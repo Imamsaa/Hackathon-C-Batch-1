@@ -710,6 +710,9 @@ let compileBusy = false;
 let lastResult = null;
 let timerInterval = null;
 let activeConsoleTab = 'output';
+let cmEditor = null;
+let EditorViewRef = null;
+let editorEditableCompartment = null;
 let sessionStarted = Boolean(Number(localStorage.getItem(START_KEY)));
 let breakState = loadBreakState();
 
@@ -788,6 +791,9 @@ function updateSessionLock() {
   if (editorInput) {
     editorInput.readOnly = locked;
     editorInput.setAttribute('aria-readonly', String(locked));
+  }
+  if (cmEditor && editorEditableCompartment && EditorViewRef) {
+    cmEditor.dispatch({effects: editorEditableCompartment.reconfigure(EditorViewRef.editable.of(!locked))});
   }
 
   ['runBtn','submitBtn','resetCodeBtn','downloadCodeBtn','bookmarkBtn','copySignatureBtn','searchInput']
@@ -874,8 +880,8 @@ function renderChallenge() {
   $('#bookmarkBtn').classList.toggle('bookmarked', state.bookmarks.includes(ch.id));
   $('#bookmarkBtn').textContent = state.bookmarks.includes(ch.id) ? '◆' : '◇';
   const draft = state.drafts[ch.id] || ch.starter;
-  $('#codeFallback').value = draft;
-  $('#lineCount').textContent = '1';
+  setCode(draft);
+  updateCursorInfo();
   renderChallengeList(); updateProgress();
   clearConsole();
 }
@@ -887,19 +893,256 @@ function selectChallenge(id) {
   document.querySelectorAll('[data-tab]').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === 'description'));
   $('#descriptionTab').classList.remove('hidden'); $('#hintsTab').classList.add('hidden');
 }
-function getCode() { return $('#codeFallback').value; }
-function setCode(text) { $('#codeFallback').value = text; }
-function persistDraft() { state.drafts[activeChallenge.id] = getCode(); state.lastTaskId=activeChallenge.id; saveProgress(); $('#editorStatus').textContent='All changes saved'; }
+function updateCursorInfo() {
+  const text = cmEditor ? cmEditor.state.doc.toString() : ($('#codeFallback')?.value || '');
+  const position = cmEditor
+    ? cmEditor.state.selection.main.head
+    : ($('#codeFallback')?.selectionStart || 0);
+  const before = text.slice(0, position);
+  const line = before.split('\n').length;
+  const lastNewline = before.lastIndexOf('\n');
+  const column = position - lastNewline;
+  const totalLines = text.split('\n').length;
+  if ($('#lineCount')) $('#lineCount').textContent = String(line);
+  if ($('#columnCount')) $('#columnCount').textContent = String(column);
+  if ($('#totalLines')) $('#totalLines').textContent = String(totalLines);
+}
+
+function notifyTextareaChange(input) {
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  updateCursorInfo();
+}
+
+function indentTextareaSelection(input, outdent = false) {
+  const value = input.value;
+  const start = input.selectionStart;
+  const end = input.selectionEnd;
+  const lineStart = value.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
+  const lastSelectedPosition = end > start ? end - 1 : start;
+  let lineEnd = value.indexOf('\n', lastSelectedPosition);
+  if (lineEnd < 0) lineEnd = value.length;
+
+  const selectedLines = value.slice(lineStart, lineEnd).split('\n');
+  const indentSizes = selectedLines.map(line => {
+    if (!outdent) return 0;
+    if (line.startsWith('\t')) return 1;
+    const spaces = line.match(/^ {1,4}/);
+    return spaces ? spaces[0].length : 0;
+  });
+  const changedLines = selectedLines.map((line, index) => {
+    if (!outdent) return '    ' + line;
+    return line.slice(indentSizes[index]);
+  });
+
+  if (outdent && indentSizes.every(size => size === 0)) return;
+  input.setRangeText(changedLines.join('\n'), lineStart, lineEnd, 'select');
+  const firstDelta = outdent ? -indentSizes[0] : 4;
+  const totalDelta = outdent ? -indentSizes.reduce((sum, size) => sum + size, 0) : 4 * selectedLines.length;
+  input.selectionStart = Math.max(lineStart, start + firstDelta);
+  input.selectionEnd = Math.max(input.selectionStart, end + totalDelta);
+  notifyTextareaChange(input);
+}
+
+function toggleTextareaComment(input) {
+  const value = input.value;
+  const start = input.selectionStart;
+  const end = input.selectionEnd;
+  const lineStart = value.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
+  const lastSelectedPosition = end > start ? end - 1 : start;
+  let lineEnd = value.indexOf('\n', lastSelectedPosition);
+  if (lineEnd < 0) lineEnd = value.length;
+  const lines = value.slice(lineStart, lineEnd).split('\n');
+  const allCommented = lines.every(line => /^\s*\/\//.test(line));
+  const changed = lines.map(line => allCommented
+    ? line.replace(/^(\s*)\/\/ ?/, '$1')
+    : line.replace(/^(\s*)/, '$1// '));
+  const prefixDelta = changed[0].length - lines[0].length;
+  const totalDelta = changed.reduce((sum, line, index) => sum + line.length - lines[index].length, 0);
+  input.setRangeText(changed.join('\n'), lineStart, lineEnd, 'select');
+  input.selectionStart = Math.max(lineStart, start + prefixDelta);
+  input.selectionEnd = Math.max(input.selectionStart, end + totalDelta);
+  notifyTextareaChange(input);
+}
+
+function handleFallbackEditorKeydown(event, input) {
+  if (input.readOnly) return;
+  const value = input.value;
+  const start = input.selectionStart;
+  const end = input.selectionEnd;
+  const pairs = { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'" };
+
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+    event.preventDefault();
+    persistDraft();
+    toast('Kode tersimpan otomatis.', 'good');
+    return;
+  }
+  if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+    event.preventDefault();
+    toggleTextareaComment(input);
+    return;
+  }
+  if (event.key === 'Tab') {
+    event.preventDefault();
+    indentTextareaSelection(input, event.shiftKey);
+    return;
+  }
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    const lineStart = value.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
+    const lineBefore = value.slice(lineStart, start);
+    const indentation = (lineBefore.match(/^\s*/) || [''])[0];
+    if (value[start - 1] === '{' && value[start] === '}') {
+      const innerIndent = indentation + '    ';
+      input.setRangeText('\n' + innerIndent + '\n' + indentation, start, end, 'end');
+      input.selectionStart = input.selectionEnd = start + 1 + innerIndent.length;
+    } else {
+      const extraIndent = lineBefore.trimEnd().endsWith('{') ? '    ' : '';
+      input.setRangeText('\n' + indentation + extraIndent, start, end, 'end');
+    }
+    notifyTextareaChange(input);
+    return;
+  }
+  if (event.key === 'Backspace' && start === end && start > 0) {
+    const opener = value[start - 1];
+    if (pairs[opener] && value[start] === pairs[opener]) {
+      event.preventDefault();
+      input.setRangeText('', start - 1, start + 1, 'end');
+      notifyTextareaChange(input);
+      return;
+    }
+  }
+  if (event.key.length === 1 && pairs[event.key]) {
+    const closer = pairs[event.key];
+    if (start === end && value[start] === closer) {
+      event.preventDefault();
+      input.selectionStart = input.selectionEnd = start + 1;
+      updateCursorInfo();
+      return;
+    }
+    event.preventDefault();
+    const selected = value.slice(start, end);
+    input.setRangeText(event.key + selected + closer, start, end, 'end');
+    input.selectionStart = start + 1;
+    input.selectionEnd = start + 1 + selected.length;
+    notifyTextareaChange(input);
+  }
+}
+
+async function enhanceWithCodeMirror(input, hasEdited) {
+  try {
+    const modules = await Promise.all([
+      import('codemirror'),
+      import('@codemirror/lang-cpp'),
+      import('@codemirror/theme-one-dark'),
+      import('@codemirror/commands'),
+      import('@codemirror/state')
+    ]);
+    if (hasEdited()) return;
+
+    const { basicSetup, EditorView } = modules[0];
+    const { cpp } = modules[1];
+    const { oneDark } = modules[2];
+    const { indentMore, indentLess, toggleComment } = modules[3];
+    const { Compartment } = modules[4];
+    const host = $('#editorHost');
+    const overlay = $('#sessionLockOverlay');
+    const initialText = input.value;
+
+    EditorViewRef = EditorView;
+    editorEditableCompartment = new Compartment();
+    cmEditor = new EditorView({
+      doc: initialText,
+      parent: host,
+      extensions: [
+        basicSetup,
+        cpp(),
+        oneDark,
+        editorEditableCompartment.of(EditorView.editable.of(sessionStarted && !breakState.active)),
+        EditorView.domEventHandlers({
+          keydown(event, view) {
+            if (event.key === 'Tab') {
+              event.preventDefault();
+              if (event.shiftKey) indentLess(view);
+              else indentMore(view);
+              return true;
+            }
+            if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+              event.preventDefault();
+              toggleComment(view);
+              return true;
+            }
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+              event.preventDefault();
+              persistDraft();
+              toast('Kode tersimpan otomatis.', 'good');
+              return true;
+            }
+            return false;
+          }
+        }),
+        EditorView.theme({
+          '&': { height: '100%', fontSize: '12px', backgroundColor: '#0b121c' },
+          '.cm-scroller': { overflow: 'auto', fontFamily: 'DM Mono, Consolas, monospace' },
+          '.cm-content': { padding: '12px 0' },
+          '.cm-line': { padding: '0 12px' },
+          '.cm-gutters': { backgroundColor: '#0b121c', borderRight: '1px solid #1c2a3b', color: '#53667c' },
+          '.cm-activeLine': { backgroundColor: 'rgba(114,153,128,.08)' },
+          '.cm-activeLineGutter': { backgroundColor: 'rgba(114,153,128,.08)' }
+        }),
+        EditorView.updateListener.of(update => {
+          if (update.docChanged) persistDraft();
+          if (update.docChanged || update.selectionSet) updateCursorInfo();
+        })
+      ]
+    });
+    if (overlay) host.insertBefore(cmEditor.dom, overlay);
+    input.remove();
+    updateSessionLock();
+    updateCursorInfo();
+    $('#editorStatus').textContent = 'Editor siap · C++';
+  } catch (error) {
+    console.warn('CodeMirror gagal dimuat; editor teks tetap aktif.', error);
+    const status = $('#editorStatus');
+    if (status) status.textContent = 'Editor dasar siap · Tab dan shortcut aktif';
+  }
+}
+
+function getCode() {
+  return cmEditor ? cmEditor.state.doc.toString() : ($('#codeFallback')?.value || '');
+}
+function setCode(text) {
+  const nextValue = String(text ?? '');
+  if (cmEditor) {
+    cmEditor.dispatch({changes:{from:0,to:cmEditor.state.doc.length,insert:nextValue}});
+  } else {
+    const input = $('#codeFallback');
+    if (input) input.value = nextValue;
+  }
+  updateCursorInfo();
+}
+function persistDraft() {
+  state.drafts[activeChallenge.id] = getCode();
+  state.lastTaskId = activeChallenge.id;
+  saveProgress();
+  if ($('#editorStatus')) $('#editorStatus').textContent = 'All changes saved';
+}
 function initEditor() {
   const input = $('#codeFallback');
   input.value = state.drafts[activeChallenge.id] || activeChallenge.starter;
   input.readOnly = !sessionStarted || breakState.active;
+  let editedBeforeEnhancement = false;
   input.addEventListener('input', () => {
+    editedBeforeEnhancement = true;
     if (!requireSession()) return;
     persistDraft();
-    $('#lineCount').textContent = String(input.value.split('\n').length);
+    updateCursorInfo();
   });
-  $('#editorStatus').textContent = 'Editor siap';
+  input.addEventListener('keydown', event => handleFallbackEditorKeydown(event, input));
+  ['click','keyup','select'].forEach(type => input.addEventListener(type, updateCursorInfo));
+  updateCursorInfo();
+  $('#editorStatus').textContent = 'Editor teks siap';
+  enhanceWithCodeMirror(input, () => editedBeforeEnhancement);
 }
 function clearConsole() {
   $('#outputView').innerHTML = '<div class="empty-console"><span class="terminal-glyph">›_</span><div><strong>Output terminal</strong><p>Jalankan kode untuk melihat hasil kompilasi dan output program.</p></div></div>';
