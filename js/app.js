@@ -4,6 +4,7 @@ const SESSION_SECONDS = 90 * 60;
 const STORAGE_KEY = 'codearena-cpp-progress-v1';
 const START_KEY = 'codearena-cpp-start-v1';
 const BREAK_KEY = 'codearena-cpp-breaks-v1';
+const FINISHED_KEY = 'codearena-cpp-finished-v1';
 const INSPECT_RESTRICTIONS_ENABLED = false; // Re-enable after development.
 
 const challenges = [
@@ -715,6 +716,7 @@ let cmEditor = null;
 let EditorViewRef = null;
 let editorEditableCompartment = null;
 let sessionStarted = Boolean(Number(localStorage.getItem(START_KEY)));
+let sessionFinished = localStorage.getItem(FINISHED_KEY) === '1';
 let leftTabDuringActiveSession = false;
 let breakState = loadBreakState();
 
@@ -736,6 +738,10 @@ function saveBreakState() {
 }
 
 function requireSession() {
+  if (sessionFinished) {
+    toast('Waktu hackathon sudah habis. Tantangan tidak bisa dikerjakan lagi.', 'bad');
+    return false;
+  }
   if (!sessionStarted) {
     toast('Tekan Mulai Sesi terlebih dahulu untuk membuka tantangan.', 'bad');
     return false;
@@ -744,16 +750,35 @@ function requireSession() {
     toast('Kamu sedang istirahat. Akhiri istirahat untuk melanjutkan.', 'bad');
     return false;
   }
+  if (getRemainingSeconds() <= 0) {
+    finishSession(false);
+    toast('Waktu hackathon sudah habis. Tantangan tidak bisa dikerjakan lagi.', 'bad');
+    return false;
+  }
   return true;
 }
 
 function getRemainingSeconds() {
+  if (sessionFinished) return 0;
   if (breakState.active && breakState.pausedRemaining !== null) {
     return breakState.pausedRemaining;
   }
   const startedAt = Number(localStorage.getItem(START_KEY));
   if (!startedAt) return SESSION_SECONDS;
   return Math.max(0, SESSION_SECONDS - Math.floor((Date.now() - startedAt) / 1000));
+}
+
+function finishSession(showNotice = true) {
+  if (sessionFinished) return;
+  sessionFinished = true;
+  localStorage.setItem(FINISHED_KEY, '1');
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  updateTimerDisplay();
+  updateSessionLock();
+  if (showNotice) toast('Waktu hackathon telah habis. Semua tantangan dikunci.', 'bad');
 }
 
 function updateTimerDisplay() {
@@ -765,20 +790,21 @@ function updateTimerDisplay() {
 }
 
 function updateSessionLock() {
-  const preStart = !sessionStarted;
-  const onBreak = sessionStarted && breakState.active;
-  const locked = preStart || onBreak;
+  const preStart = !sessionStarted && !sessionFinished;
+  const onBreak = sessionStarted && breakState.active && !sessionFinished;
+  const finished = sessionFinished;
+  const locked = preStart || onBreak || finished;
 
   const startButton = $('#startTimerBtn');
   if (startButton) {
-    startButton.textContent = preStart ? 'Mulai Sesi' : 'Sesi Aktif';
+    startButton.textContent = finished ? 'Waktu Habis' : preStart ? 'Mulai Sesi' : 'Sesi Aktif';
     startButton.disabled = !preStart;
   }
 
   const breakButton = $('#breakBtn');
   if (breakButton) {
-    breakButton.hidden = preStart;
-    breakButton.disabled = !onBreak && breakState.used >= 2;
+    breakButton.hidden = preStart || finished;
+    breakButton.disabled = finished || (!onBreak && breakState.used >= 2);
     breakButton.textContent = onBreak ? '▶ Akhiri Istirahat' : '☕ Mulai Istirahat';
     breakButton.classList.toggle('is-resume', onBreak);
   }
@@ -808,21 +834,26 @@ function updateSessionLock() {
     const title = $('#sessionLockTitle');
     const message = $('#sessionLockMessage');
     const note = $('#sessionLockNote');
-    if (title) title.textContent = onBreak ? 'Kamu sedang istirahat' : 'Sesi belum dimulai';
-    if (message) message.textContent = onBreak
-      ? 'Tantangan, navigasi soal, dan editor dikunci sementara. Klik Akhiri Istirahat untuk kembali mengerjakan.'
-      : 'Soal pertama bisa kamu lihat terlebih dahulu. Editor dan tantangan lainnya akan terbuka setelah kamu menekan Mulai Sesi.';
-    if (note) note.textContent = onBreak
-      ? `Waktu kompetisi dijeda · Kesempatan istirahat terpakai ${breakState.used} dari 2`
-      : 'Waktu hackathon mulai dihitung saat sesi dibuka.';
+    if (title) title.textContent = finished ? 'Waktu hackathon habis' : onBreak ? 'Kamu sedang istirahat' : 'Sesi belum dimulai';
+    if (message) message.textContent = finished
+      ? 'Waktu kompetisi 90 menit telah selesai. Editor, input, navigasi soal, Run Code, dan Submit sudah dikunci. Terima kasih telah mengikuti C++ Hackathon.'
+      : onBreak
+        ? 'Tantangan, navigasi soal, dan editor dikunci sementara. Klik Akhiri Istirahat untuk kembali mengerjakan.'
+        : 'Soal pertama bisa kamu lihat terlebih dahulu. Editor dan tantangan lainnya akan terbuka setelah kamu menekan Mulai Sesi.';
+    if (note) note.textContent = finished
+      ? 'Sesi telah berakhir dan status ini tetap tersimpan meskipun halaman dimuat ulang.'
+      : onBreak
+        ? `Waktu kompetisi dijeda · Kesempatan istirahat terpakai ${breakState.used} dari 2`
+        : 'Waktu hackathon mulai dihitung saat sesi dibuka.';
   }
   const editorHost = $('#editorHost');
   if (editorHost) editorHost.classList.toggle('session-locked', locked);
   const challengeList = $('#challengeList');
   if (challengeList) challengeList.classList.toggle('session-locked', locked);
   const editorStatus = $('#editorStatus');
-  if (editorStatus) editorStatus.textContent = preStart
-    ? 'Terkunci · Mulai sesi untuk coding'
+  if (editorStatus) editorStatus.textContent = finished
+    ? 'Sesi berakhir · Editor terkunci'
+    : preStart ? 'Terkunci · Mulai sesi untuk coding'
     : onBreak ? 'Terkunci · Sedang istirahat' : 'All changes saved';
   renderChallengeList();
 }
@@ -1460,6 +1491,11 @@ function runChallenge(mode) {
   }
 }
 function startTimer() {
+  if (sessionFinished) {
+    updateTimerDisplay();
+    updateSessionLock();
+    return;
+  }
   let startedAt = Number(localStorage.getItem(START_KEY));
   if (!startedAt) {
     startedAt = Date.now();
@@ -1478,13 +1514,11 @@ function startTimer() {
   const tick = () => {
     updateTimerDisplay();
     if (getRemainingSeconds() <= 0) {
-      clearInterval(timerInterval);
-      timerInterval = null;
-      toast('Waktu sesi hackathon telah habis.');
+      finishSession(true);
     }
   };
   tick();
-  if (getRemainingSeconds() > 0) timerInterval = setInterval(tick, 1000);
+  if (!sessionFinished && getRemainingSeconds() > 0) timerInterval = setInterval(tick, 1000);
 }
 
 function startBreak() {
@@ -1518,8 +1552,12 @@ function startBreak() {
 }
 
 function endBreak() {
-  if (!sessionStarted || !breakState.active) return;
+  if (sessionFinished || !sessionStarted || !breakState.active) return;
   const remaining = breakState.pausedRemaining ?? getRemainingSeconds();
+  if (remaining <= 0) {
+    finishSession(true);
+    return;
+  }
   const elapsedSeconds = SESSION_SECONDS - remaining;
   localStorage.setItem(START_KEY, String(Date.now() - elapsedSeconds * 1000));
   breakState.active = false;
