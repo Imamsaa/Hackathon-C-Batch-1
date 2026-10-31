@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#090d17" />
+  <meta name="description" content="Code Arena — C++ Hackathon Challenge Platform" />
+  <title>Code Arena — C++ Hackathon</title>
+  <link rel="preconnect" href="https://esm.sh" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Code Arena home">
+        <span class="brand-mark">&lt;/&gt;</span>
+        <span class="brand-copy"><strong>CODE<span>ARENA</span></strong><small>ICT HACKATHON</small></span>
+      </a>
+
+      <div class="event-label"><span class="live-dot"></span> SOLO CHALLENGE <span class="event-divider">/</span> C++ TRACK</div>
+
+      <div class="top-actions">
+        <div class="timer-chip"><span class="timer-icon">◷</span><span id="timerDisplay">90:00</span><span class="timer-label">REMAINING</span></div>
+        <button id="startTimerBtn" class="btn btn-quiet btn-small">Mulai Sesi</button>
+        <div class="avatar" title="Peserta">P</div>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar panel">
+        <div class="sidebar-heading">
+          <div><p class="eyebrow">ARENA MAP</p><h2>Challenges</h2></div>
+          <span class="count-pill" id="challengeCount">08</span>
+        </div>
+
+        <label class="search-box">
+          <span>⌕</span>
+          <input id="searchInput" type="search" placeholder="Cari challenge..." autocomplete="off" />
+          <kbd>/</kbd>
+        </label>
+
+        <div class="filter-label">TRACK</div>
+        <nav class="track-filters" aria-label="Filter tantangan">
+          <button class="filter-btn active" data-filter="all"><span class="filter-icon">◈</span> Semua tantangan <span class="filter-count" id="allCount">8</span></button>
+          <button class="filter-btn" data-filter="Dasar"><span class="filter-icon">⌘</span> Fundamental <span class="filter-count">3</span></button>
+          <button class="filter-btn" data-filter="String"><span class="filter-icon">Aa</span> String <span class="filter-count">2</span></button>
+          <button class="filter-btn" data-filter="Array"><span class="filter-icon">▦</span> Array & Logika <span class="filter-count">3</span></button>
+        </nav>
+
+        <div class="challenge-list-heading"><span>DAFTAR SOAL</span><span>XP</span></div>
+        <div id="challengeList" class="challenge-list"></div>
+
+        <div class="sidebar-bottom">
+          <div class="progress-card">
+            <div class="progress-top"><span>PROGRESS KAMU</span><strong id="progressPercent">0%</strong></div>
+            <div class="progress-track"><span id="progressBar"></span></div>
+            <p><strong id="solvedCount">0</strong> dari 8 challenge diselesaikan <span class="xp-total">· <strong id="xpTotal">0</strong> XP</span></p>
+          </div>
+          <div class="sidebar-note"><span>✦</span> Think clearly. Code boldly.</div>
+        </div>
+      </aside>
+
+      <main class="problem-panel panel">
+        <div class="problem-topline">
+          <div class="breadcrumbs"><span>Challenges</span><span>/</span><strong id="problemNumber">01</strong></div>
+          <button class="icon-btn" id="bookmarkBtn" title="Tandai challenge" aria-label="Tandai challenge">◇</button>
+        </div>
+
+        <div class="problem-heading">
+          <div class="problem-title-row"><h1 id="problemTitle">Penjumlahan Sederhana</h1><span class="solved-badge hidden" id="solvedBadge">✓ SOLVED</span></div>
+          <div class="problem-meta"><span class="difficulty easy" id="problemDifficulty">EASY</span><span class="meta-item">◈ <span id="problemXP">100</span> XP</span><span class="meta-item">◷ <span id="problemTime">10 min</span></span></div>
+        </div>
+
+        <div class="problem-tabs"><button class="problem-tab active" data-tab="description">Description</button><button class="problem-tab" data-tab="hints">Hints <span class="tab-lock">✧</span></button></div>
+        <section id="descriptionTab" class="problem-content">
+          <p class="problem-description" id="problemDescription"></p>
+          <div class="section-block">
+            <h3>Function Signature</h3>
+            <div class="signature-box"><span class="signature-lang">C++</span><code id="functionSignature"></code><button id="copySignatureBtn" class="copy-btn" title="Salin signature">▢</button></div>
+          </div>
+          <div class="section-block">
+            <h3>Contoh</h3>
+            <div id="examples" class="examples-list"></div>
+          </div>
+          <div class="section-block constraints-block">
+            <h3>Constraints</h3>
+            <ul id="constraintsList"></ul>
+          </div>
+          <div class="hint-card"><span class="hint-icon">✦</span><p><strong>Catatan:</strong> Buat fungsi sesuai signature di atas. Kamu tidak perlu menulis <code>main()</code>; sistem akan membuat program penguji secara otomatis.</p></div>
+        </section>
+        <section id="hintsTab" class="problem-content hidden">
+          <div class="hint-unlock"><span>✧</span><h3>Butuh petunjuk?</h3><p id="hintText">Coba pecah masalah menjadi langkah-langkah kecil, lalu pikirkan kasus paling sederhana terlebih dahulu.</p></div>
+        </section>
+      </main>
+
+      <section class="editor-panel panel">
+        <div class="editor-topbar">
+          <div class="file-tab"><span class="file-dot"></span><span>main.cpp</span><span class="file-close">×</span></div>
+          <div class="editor-tools"><span class="language-chip">C++ <b>20</b></span><button id="resetCodeBtn" class="tool-btn" title="Reset kode">↺ <span>Reset</span></button><button id="downloadCodeBtn" class="tool-btn" title="Download kode">↓ <span>Export</span></button></div>
+        </div>
+
+        <div class="editor-caption"><span><i class="status-dot"></i> EDITOR</span><span id="editorStatus">All changes saved</span></div>
+        <div id="editorHost" class="editor-host"><textarea id="codeFallback" spellcheck="false" aria-label="Editor C++"></textarea></div>
+
+        <div class="editor-footer"><span>Ln <b id="lineCount">1</b>, Col 1</span><span>UTF-8 <i></i> C++20</span><span class="shortcut-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> Run</span></div>
+
+        <div class="console-panel">
+          <div class="console-header">
+            <div class="console-tabs"><button class="console-tab active" data-console-tab="output">OUTPUT</button><button class="console-tab" data-console-tab="tests">TEST RESULTS <span class="console-count" id="testResultCount">—</span></button></div>
+            <div class="console-actions"><span id="runDuration"></span><button class="clear-btn" id="clearOutputBtn">Clear</button></div>
+          </div>
+          <div id="outputView" class="console-view">
+            <div class="empty-console"><span class="terminal-glyph">›_</span><div><strong>Output terminal</strong><p>Jalankan kode untuk melihat hasil kompilasi dan output program.</p></div></div>
+          </div>
+          <div id="testsView" class="console-view hidden">
+            <div class="empty-console"><span class="terminal-glyph">✓</span><div><strong>Belum ada hasil test</strong><p>Tekan Run Code atau Submit untuk mulai menguji solusi.</p></div></div>
+          </div>
+        </div>
+
+        <div class="runbar">
+          <div class="runbar-note"><span class="shield-icon">⬡</span> Executed locally with WebAssembly</div>
+          <div class="run-actions"><button id="runBtn" class="btn btn-secondary"><span>▶</span> Run Code</button><button id="submitBtn" class="btn btn-primary"><span>✓</span> Submit <span class="submit-arrow">↗</span></button></div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="page-footer"><span>CODEARENA <b>·</b> Built for curious minds</span><span>POWERED BY <strong>WEBASSEMBLY</strong> <i class="footer-dot"></i> C++20</span></footer>
+  </div>
+  <div id="toastRegion" class="toast-region" aria-live="polite"></div>
+  <div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="loading-card"><div class="loader-ring"></div><p class="eyebrow">WASM COMPILER</p><h2 id="loadingTitle">Menyiapkan compiler...</h2><p id="loadingMessage">Menginisialisasi lingkungan C++ di browser.</p><div class="loading-progress"><span id="loadingProgress"></span></div><small>Proses pertama kali dapat memerlukan waktu lebih lama.</small></div>
+  </div>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
