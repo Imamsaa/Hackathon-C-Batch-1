@@ -4,6 +4,7 @@ const SESSION_SECONDS = 90 * 60;
 const STORAGE_KEY = 'codearena-cpp-progress-v1';
 const START_KEY = 'codearena-cpp-start-v1';
 const BREAK_KEY = 'codearena-cpp-breaks-v1';
+const INSPECT_RESTRICTIONS_ENABLED = false; // Re-enable after development.
 
 const challenges = [
   {
@@ -1482,7 +1483,7 @@ function bindEvents() {
   // Discourage common browser DevTools / View Source shortcuts during the active session.
   // This is a client-side deterrent, not a security boundary.
   document.addEventListener('keydown', event => {
-    if (!sessionStarted || breakState.active) return;
+    if (!INSPECT_RESTRICTIONS_ENABLED || !sessionStarted || breakState.active) return;
     if (!isDeveloperToolsShortcut(event)) return;
     event.preventDefault();
     event.stopPropagation();
@@ -1492,7 +1493,7 @@ function bindEvents() {
 
   // Disable the browser context menu while the hackathon session is active.
   document.addEventListener('contextmenu', event => {
-    if (!sessionStarted || breakState.active) return;
+    if (!INSPECT_RESTRICTIONS_ENABLED || !sessionStarted || breakState.active) return;
     event.preventDefault();
     event.stopPropagation();
     showDeveloperToolsWarning();
