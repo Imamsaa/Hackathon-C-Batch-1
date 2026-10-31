@@ -222,7 +222,7 @@ function showOutput(text, kind='') {
 }
 function makeJudgeSource(code, testCases) {
   const calls = testCases.map((test, index) => `    testCase(${index+1}, (${test.expr}));`).join('\n');
-  return `#include <bits/stdc++.h>\nusing namespace std;\n\n${code}\n\nint main() {\n    int passed = 0;\n    auto testCase = [&](int id, bool ok) {\n        cout << "__CASE__|" << id << "|" << (ok ? "PASS" : "FAIL") << "\\n";\n        if (ok) ++passed;\n    };\n${calls}\n    cout << "__SUMMARY__|" << passed << "|${testCases.length}" << "\\n";\n    return 0;\n}\n`;
+  return `#include <iostream>\n#include <string>\n#include <vector>\n#include <algorithm>\n#include <unordered_map>\nusing namespace std;\n\n${code}\n\nint main() {\n    int passed = 0;\n    auto testCase = [&](int id, bool ok) {\n        cout << "__CASE__|" << id << "|" << (ok ? "PASS" : "FAIL") << "\\n";\n        if (ok) ++passed;\n    };\n${calls}\n    cout << "__SUMMARY__|" << passed << "|${testCases.length}" << "\\n";\n    return 0;\n}\n`;
 }
 function parseJudgeOutput(stdout, tests) {
   const cases=[]; let passed=0; let total=tests.length;
