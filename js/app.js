@@ -252,7 +252,10 @@ function runChallenge(mode) {
   if (compileBusy) return;
   const code = getCode();
   if (!code.trim()) { toast('Editor masih kosong. Tulis solusi terlebih dahulu.','bad'); return; }
-  if (/\\bint\\s+main\\s*\\(/.test(code) || /\\bauto\\s+main\\s*\\(/.test(code)) {
+  const normalizedCode = code.split('\n').map(line => line.trim()).join('\n');
+  const declaresMain = ['int main(', 'int main (', 'auto main(', 'auto main (', 'signed main(']
+    .some(signature => normalizedCode.includes(signature));
+  if (declaresMain) {
     toast('Jangan tulis main(). Cukup implementasikan function signature pada soal.','bad');
     return;
   }
@@ -311,14 +314,15 @@ function runChallenge(mode) {
     if (data.type === 'challenge-result') {
       if (settled) return;
       settled = true;
-      const results = data.tests || [];
-      const result = {
-        passed: results.filter(item => item.passed).length,
-        total: results.length,
-        cases: results.map(item => ({index:item.index,status:item.passed?'PASS':'FAIL'})),
-        extra: results.filter(item => item.runtimeError || item.stderr)
-          .map(item => item.runtimeError || item.stderr).join('\\n')
-      };
+      const result = parseJudgeOutput(data.stdout || '', tests);
+      result.extra = [result.extra, data.stderr || data.runtimeError || ''].filter(Boolean).join('\n');
+      if (data.runtimeError) {
+        showOutput('RUNTIME ERROR\n\n' + data.runtimeError, 'error');
+        $('#testResultCount').textContent = 'RE';
+        toast('Program mengalami runtime error.', 'bad');
+        finish();
+        return;
+      }
       if (data.compileOutput) showOutput('> Compile berhasil.\\n\\n' + data.compileOutput, 'muted');
       const allPassed = renderTestResults(result, tests, mode);
       const duration = Math.round(performance.now() - started);
