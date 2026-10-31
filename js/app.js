@@ -1,17 +1,5 @@
-import { EditorView, basicSetup } from 'https://esm.sh/codemirror@6.0.1';
-import { cpp } from 'https://esm.sh/@codemirror/lang-cpp@6.0.2';
-import { oneDark } from 'https://esm.sh/@codemirror/theme-one-dark@6.1.2';
-// Load the compiler only when a participant runs code. If one CDN is down,
-// try the secondary CDN without preventing the challenge UI from starting.
-// 4.5.0 is the published version of @gameguild/emception-browser.
-// The core package may have a newer version; the browser adapter is pinned
-// independently and must use a version that actually exists on npm.
-const EMCEPTION_CDN_CANDIDATES = [
-  'https://esm.sh/@gameguild/emception-browser@4.5.0?bundle',
-  'https://cdn.jsdelivr.net/npm/@gameguild/emception-browser@4.5.0/+esm',
-  'https://esm.sh/@gameguild/emception-browser@4.5.0'
-];
-
+// Code Arena uses the browsercc + WASI Web Worker runtime already proven in
+// Imamsaa/codelab-cpp. No Emception package bundling is required.
 const SESSION_SECONDS = 90 * 60;
 const STORAGE_KEY = 'codearena-cpp-progress-v1';
 const START_KEY = 'codearena-cpp-start-v1';
@@ -199,42 +187,29 @@ function renderChallenge() {
   $('#bookmarkBtn').classList.toggle('bookmarked', state.bookmarks.includes(ch.id));
   $('#bookmarkBtn').textContent = state.bookmarks.includes(ch.id) ? '◆' : '◇';
   const draft = state.drafts[ch.id] || ch.starter;
-  if (editor) editor.dispatch({changes:{from:0,to:editor.state.doc.length,insert:draft}});
-  else $('#codeFallback').value = draft;
+  $('#codeFallback').value = draft;
   $('#lineCount').textContent = '1';
   renderChallengeList(); updateProgress();
   clearConsole();
 }
 function selectChallenge(id) {
   const next = challenges.find(ch => ch.id === id); if (!next) return;
-  if (editor) state.drafts[activeChallenge.id] = editor.state.doc.toString();
+  state.drafts[activeChallenge.id] = getCode();
   activeChallenge = next; state.lastTaskId = id; saveProgress(); renderChallenge();
   document.querySelectorAll('[data-tab]').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === 'description'));
   $('#descriptionTab').classList.remove('hidden'); $('#hintsTab').classList.add('hidden');
 }
-function getCode() { return editor ? editor.state.doc.toString() : $('#codeFallback').value; }
-function setCode(text) { if (editor) editor.dispatch({changes:{from:0,to:editor.state.doc.length,insert:text}}); else $('#codeFallback').value=text; }
+function getCode() { return $('#codeFallback').value; }
+function setCode(text) { $('#codeFallback').value = text; }
 function persistDraft() { state.drafts[activeChallenge.id] = getCode(); state.lastTaskId=activeChallenge.id; saveProgress(); $('#editorStatus').textContent='All changes saved'; }
 function initEditor() {
-  try {
-    editor = new EditorView({
-      doc: state.drafts[activeChallenge.id] || activeChallenge.starter,
-      extensions: [basicSetup, cpp(), oneDark, EditorView.lineWrapping, EditorView.theme({
-        '&': {height:'100%',backgroundColor:'#0b121c',color:'#d7e3ee',fontSize:'12px'},
-        '.cm-scroller': {fontFamily:"'DM Mono', monospace",lineHeight:'1.7',overflow:'auto'},
-        '.cm-gutters': {backgroundColor:'#0b121c',borderRight:'1px solid #1c2a3b',color:'#53667c'},
-        '.cm-activeLine': {backgroundColor:'rgba(114,153,128,.08)'}
-      }), EditorView.updateListener.of(update => {
-        if (update.docChanged) { persistDraft(); $('#lineCount').textContent = String(update.state.doc.lines); }
-      })],
-      parent: $('#editorHost')
-    });
-    $('#codeFallback').remove();
-  } catch (error) {
-    console.warn('CodeMirror unavailable; falling back to textarea.', error);
-    $('#editorStatus').textContent = 'Fallback editor';
-    $('#codeFallback').addEventListener('input', () => { persistDraft(); $('#lineCount').textContent = String($('#codeFallback').value.split('\n').length); });
-  }
+  const input = $('#codeFallback');
+  input.value = state.drafts[activeChallenge.id] || activeChallenge.starter;
+  input.addEventListener('input', () => {
+    persistDraft();
+    $('#lineCount').textContent = String(input.value.split('\n').length);
+  });
+  $('#editorStatus').textContent = 'Editor siap';
 }
 function clearConsole() {
   $('#outputView').innerHTML = '<div class="empty-console"><span class="terminal-glyph">›_</span><div><strong>Output terminal</strong><p>Jalankan kode untuk melihat hasil kompilasi dan output program.</p></div></div>';
@@ -273,111 +248,121 @@ function renderTestResults(result, tests, mode) {
 function showLoading(title, message) { $('#loadingTitle').textContent=title; $('#loadingMessage').textContent=message; $('#loadingProgress').style.width='12%'; $('#loadingOverlay').classList.remove('hidden'); }
 function updateLoading(title,message,percent) { $('#loadingTitle').textContent=title; $('#loadingMessage').textContent=message; $('#loadingProgress').style.width=`${percent}%`; }
 function hideLoading() { $('#loadingOverlay').classList.add('hidden'); }
-async function getCompiler() {
-  if (compiler) return compiler;
-  showLoading('Menyiapkan compiler...', 'Menyiapkan lingkungan WebAssembly untuk C++.');
-  try {
-    updateLoading('Memeriksa keamanan browser...', 'Menunggu Cross-Origin Isolation dari service worker GitHub Pages.', 24);
-    // The self-hosted COI service worker is loaded by index.html and controls
-    // this page after its first registration/reload.
-    const isolationDeadline = Date.now() + 5000;
-    while (!crossOriginIsolated && Date.now() < isolationDeadline) {
-      await new Promise(resolve => setTimeout(resolve, 150));
-    }
-    if (!crossOriginIsolated) {
-      throw new Error('Cross-Origin Isolation belum aktif. Pastikan file coi-serviceworker.js termuat, buka situs melalui HTTPS, lalu refresh halaman.');
-    }
-
-    updateLoading('Memuat modul compiler...', 'Menghubungkan runtime C++ WebAssembly.', 42);
-    const failures = [];
-    for (const url of EMCEPTION_CDN_CANDIDATES) {
-      try {
-        const module = await import(url);
-        if (typeof module.createEmception !== 'function') {
-          throw new Error('createEmception tidak ditemukan pada modul CDN.');
-        }
-        updateLoading('Memuat toolchain C++...', 'Clang dan library standar sedang dimuat ke browser.', 58);
-        compiler = await module.createEmception({tty:'none'});
-        break;
-      } catch (error) {
-        failures.push(`${url}: ${error?.message || error}`);
-        console.warn('Compiler CDN gagal dimuat:', url, error);
-      }
-    }
-    if (!compiler) {
-      throw new Error(`Gagal memuat compiler dari seluruh CDN:\\n${failures.join('\\n')}\\nPeriksa koneksi internet atau coba beberapa saat lagi.`);
-    }
-    if (compiler?.on) compiler.on('progress', event => {
-      const phase=event?.phase || 'Memuat runtime';
-      const message=event?.message || phase;
-      const percent=event?.total ? Math.min(92,50+Math.round((event.current/event.total)*40)) : 65;
-      updateLoading('Memuat toolchain C++...', message, percent);
-    });
-    updateLoading('Compiler siap', 'Lingkungan C++ berhasil disiapkan.', 100);
-    return compiler;
-  } catch(error) {
-    compiler=null;
-    throw error;
-  } finally {
-    setTimeout(hideLoading, 280);
-  }
-}
-function withTimeout(promise, ms, label) {
-  let timer;
-  const timeout = new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(`${label} melebihi batas waktu ${Math.round(ms/1000)} detik.`)),ms);});
-  return Promise.race([promise,timeout]).finally(()=>clearTimeout(timer));
-}
-async function runChallenge(mode) {
+function runChallenge(mode) {
   if (compileBusy) return;
-  const code=getCode();
+  const code = getCode();
   if (!code.trim()) { toast('Editor masih kosong. Tulis solusi terlebih dahulu.','bad'); return; }
-  if (/\bint\s+main\s*\(/.test(code) || /\bauto\s+main\s*\(/.test(code)) { toast('Jangan tulis main(). Cukup implementasikan function signature pada soal.','bad'); return; }
-  compileBusy=true; $('#runBtn').disabled=true; $('#submitBtn').disabled=true;
-  $('#runBtn').innerHTML='<span>◌</span> Compiling...'; $('#submitBtn').textContent='Checking...';
-  const tests=mode==='submit'?activeChallenge.tests:activeChallenge.tests.filter(t=>!t.hidden);
-  const started=performance.now(); state.attempts++; saveProgress();
-  try {
-    startTimer();
-    const api=await getCompiler();
-    hideLoading();
-    showOutput('> Menyiapkan source code...\n> Mengompilasi dengan Clang C++20...','muted');
-    showOutput('> Menyiapkan source code...\n> Mengompilasi dan menjalankan C++ melalui WebAssembly...','muted');
-    // Use the browser adapter's public compileAndRun API. This avoids relying
-    // on internal VFS paths or manually invoking implementation-specific tools.
-    const executionResult=await withTimeout(
-      api.compileAndRun(makeJudgeSource(code,tests)),
-      90000,
-      'Kompilasi dan eksekusi'
-    );
-    if (executionResult.exitCode!==0) {
-      const errorText=executionResult.stderr || executionResult.stdout || `Proses berhenti dengan exit code ${executionResult.exitCode}.`;
-      showOutput(`COMPILATION / RUNTIME ERROR\n\n${errorText}`,'error');
-      $('#testResultCount').textContent='ERR';
-      toast('Compiler gagal menjalankan program. Periksa pesan error.','bad');
+  if (/\\bint\\s+main\\s*\\(/.test(code) || /\\bauto\\s+main\\s*\\(/.test(code)) {
+    toast('Jangan tulis main(). Cukup implementasikan function signature pada soal.','bad');
+    return;
+  }
+
+  compileBusy = true;
+  $('#runBtn').disabled = true;
+  $('#submitBtn').disabled = true;
+  $('#runBtn').innerHTML = '<span>◌</span> Compiling...';
+  $('#submitBtn').textContent = 'Checking...';
+  const tests = mode === 'submit' ? activeChallenge.tests : activeChallenge.tests.filter(test => !test.hidden);
+  const started = performance.now();
+  state.attempts++;
+  saveProgress();
+
+  const worker = new Worker(new URL('./compiler-worker.js', import.meta.url), { type: 'module' });
+  let settled = false;
+  const watchdog = setTimeout(() => {
+    if (settled) return;
+    settled = true;
+    showOutput('EXECUTION ERROR\\n\\nKompilasi atau eksekusi melebihi batas waktu 90 detik.', 'error');
+    $('#testResultCount').textContent = 'TLE';
+    toast('Proses melebihi batas waktu.', 'bad');
+    finish();
+  }, 90000);
+
+  function finish() {
+    clearTimeout(watchdog);
+    worker.terminate();
+    compileBusy = false;
+    $('#runBtn').disabled = false;
+    $('#submitBtn').disabled = false;
+    $('#runBtn').innerHTML = '<span>▶</span> Run Code';
+    $('#submitBtn').innerHTML = '<span>✓</span> Submit <span class="submit-arrow">↗</span>';
+    persistDraft();
+  }
+
+  worker.onmessage = event => {
+    const data = event.data || {};
+    if (data.type === 'status') {
+      showOutput('> ' + (data.message || 'Memproses compiler…'), 'muted');
       return;
     }
-    const result=parseJudgeOutput(executionResult.stdout,tests);
-    if (result.cases.length!==tests.length) throw new Error('Output test harness tidak lengkap. Pastikan kode solusi tidak mengubah alur main() milik sistem.');
-    const allPassed=renderTestResults(result,tests,mode);
-    const duration=Math.round(performance.now()-started);
-    $('#runDuration').textContent=`${duration} ms`;
-    if (mode==='submit' && allPassed) {
-      const isNew=!state.solved.includes(activeChallenge.id);
-      if (isNew) { state.solved.push(activeChallenge.id); state.xp+=activeChallenge.xp; saveProgress(); updateProgress(); renderChallengeList(); $('#solvedBadge').classList.remove('hidden'); }
-      toast(isNew?`Accepted! +${activeChallenge.xp} XP`:'Accepted! Challenge sudah pernah diselesaikan.', 'good');
-    } else if (allPassed) toast('Sample test berhasil. Saatnya Submit untuk hidden test.','good');
-    else toast('Belum lolos semua test. Periksa kembali logika program.','bad');
-  } catch(error) {
-    console.error(error);
-    const message=error?.message || String(error);
-    showOutput(`EXECUTION ERROR\n\n${message}\n\nPastikan browser mendukung WebAssembly dan service worker tidak diblokir.`,'error');
-    $('#testResultCount').textContent='ERR';
-    if (/melebihi batas waktu/.test(message)) { try{compiler?.dispose?.();}catch{} compiler=null; }
-    toast('Eksekusi gagal. Detail tersedia di Output.','bad');
-  } finally {
-    compileBusy=false; $('#runBtn').disabled=false; $('#submitBtn').disabled=false;
-    $('#runBtn').innerHTML='<span>▶</span> Run Code'; $('#submitBtn').innerHTML='<span>✓</span> Submit <span class="submit-arrow">↗</span>';
-    persistDraft();
+    if (data.type === 'test-case-start') {
+      $('#runDuration').textContent = 'Test ' + (data.index + 1) + '/' + data.total;
+      return;
+    }
+    if (data.type === 'result' && !data.ok) {
+      if (settled) return;
+      settled = true;
+      showOutput('COMPILATION ERROR\\n\\n' + (data.compileOutput || data.error || 'Kompilasi gagal.'), 'error');
+      $('#testResultCount').textContent = 'CE';
+      toast('Periksa kembali kode C++ kamu.', 'bad');
+      finish();
+      return;
+    }
+    if (data.type === 'challenge-result') {
+      if (settled) return;
+      settled = true;
+      const results = data.tests || [];
+      const result = {
+        passed: results.filter(item => item.passed).length,
+        total: results.length,
+        cases: results.map(item => ({index:item.index,status:item.passed?'PASS':'FAIL'})),
+        extra: results.filter(item => item.runtimeError || item.stderr)
+          .map(item => item.runtimeError || item.stderr).join('\\n')
+      };
+      if (data.compileOutput) showOutput('> Compile berhasil.\\n\\n' + data.compileOutput, 'muted');
+      const allPassed = renderTestResults(result, tests, mode);
+      const duration = Math.round(performance.now() - started);
+      $('#runDuration').textContent = duration + ' ms';
+
+      if (mode === 'submit' && allPassed) {
+        const isNew = !state.solved.includes(activeChallenge.id);
+        if (isNew) {
+          state.solved.push(activeChallenge.id);
+          state.xp += activeChallenge.xp;
+          saveProgress();
+          updateProgress();
+          renderChallengeList();
+          $('#solvedBadge').classList.remove('hidden');
+        }
+        toast(isNew ? 'Accepted! +' + activeChallenge.xp + ' XP' : 'Accepted! Challenge sudah pernah diselesaikan.', 'good');
+      } else if (allPassed) {
+        toast('Sample test berhasil. Saatnya Submit untuk hidden test.', 'good');
+      } else {
+        toast('Belum lolos semua test. Periksa kembali logika program.', 'bad');
+      }
+      finish();
+    }
+  };
+
+  worker.onerror = event => {
+    if (settled) return;
+    settled = true;
+    showOutput('COMPILER WORKER ERROR\\n\\n' + (event.message || 'Worker gagal dimuat.') + '\\nPastikan CDN browsercc dapat diakses.', 'error');
+    $('#testResultCount').textContent = 'ERR';
+    toast('Compiler worker gagal dijalankan.', 'bad');
+    finish();
+  };
+
+  try {
+    startTimer();
+    showOutput('> Mengirim source ke compiler WebAssembly…\\n> Clang C++20 sedang disiapkan.', 'muted');
+    worker.postMessage({ source: makeJudgeSource(code, tests), standard: 'c++20' });
+  } catch (error) {
+    if (!settled) {
+      settled = true;
+      showOutput('EXECUTION ERROR\\n\\n' + (error?.message || error), 'error');
+      finish();
+    }
   }
 }
 function startTimer() {
