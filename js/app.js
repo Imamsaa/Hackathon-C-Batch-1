@@ -851,6 +851,22 @@ function showClipboardWarning(message, title = 'Peringatan') {
   if (acknowledge) acknowledge.focus();
 }
 
+function isDeveloperToolsShortcut(event) {
+  const key = String(event.key || '').toLowerCase();
+  const ctrlOrMeta = event.ctrlKey || event.metaKey;
+  const devtoolsCombo = (ctrlOrMeta && event.shiftKey && ['i', 'j', 'c', 'k'].includes(key))
+    || (event.metaKey && event.altKey && ['i', 'j', 'c'].includes(key));
+  const viewSourceCombo = (event.ctrlKey && key === 'u') || (event.metaKey && key === 'u');
+  return event.key === 'F12' || devtoolsCombo || viewSourceCombo;
+}
+
+function showDeveloperToolsWarning() {
+  showClipboardWarning(
+    'Developer Tools dan View Source tidak diperbolehkan selama sesi hackathon. Silakan kembali mengerjakan tantangan.',
+    'Akses Developer Tools Dibatasi'
+  );
+}
+
 function showTabSwitchWarning() {
   showClipboardWarning(
     'Kami mendeteksi kamu meninggalkan tab C++ Hackathon. Tetap fokus pada soal dan jangan membuka browser atau AI selama sesi berlangsung.',
@@ -1462,6 +1478,25 @@ function bindEvents() {
   $('#clipboardWarningModal')?.addEventListener('click', event => {
     if (event.target === $('#clipboardWarningModal')) closeClipboardWarning();
   });
+
+  // Discourage common browser DevTools / View Source shortcuts during the active session.
+  // This is a client-side deterrent, not a security boundary.
+  document.addEventListener('keydown', event => {
+    if (!sessionStarted || breakState.active) return;
+    if (!isDeveloperToolsShortcut(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+    showDeveloperToolsWarning();
+  }, true);
+
+  // Disable the browser context menu while the hackathon session is active.
+  document.addEventListener('contextmenu', event => {
+    if (!sessionStarted || breakState.active) return;
+    event.preventDefault();
+    event.stopPropagation();
+    showDeveloperToolsWarning();
+  }, true);
 
   // Page Visibility API: warn only after the participant returns to the tab.
   // This is a warning-only feature; it does not add violation points or penalties.
