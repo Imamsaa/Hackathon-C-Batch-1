@@ -3,9 +3,13 @@ import { cpp } from 'https://esm.sh/@codemirror/lang-cpp@6.0.2';
 import { oneDark } from 'https://esm.sh/@codemirror/theme-one-dark@6.1.2';
 // Load the compiler only when a participant runs code. If one CDN is down,
 // try the secondary CDN without preventing the challenge UI from starting.
+// 4.5.0 is the published version of @gameguild/emception-browser.
+// The core package may have a newer version; the browser adapter is pinned
+// independently and must use a version that actually exists on npm.
 const EMCEPTION_CDN_CANDIDATES = [
-  'https://esm.sh/@gameguild/emception-browser@4.5.2?bundle',
-  'https://cdn.jsdelivr.net/npm/@gameguild/emception-browser@4.5.2/+esm'
+  'https://esm.sh/@gameguild/emception-browser@4.5.0?bundle',
+  'https://cdn.jsdelivr.net/npm/@gameguild/emception-browser@4.5.0/+esm',
+  'https://esm.sh/@gameguild/emception-browser@4.5.0'
 ];
 
 const SESSION_SECONDS = 90 * 60;
@@ -337,20 +341,22 @@ async function runChallenge(mode) {
     const api=await getCompiler();
     hideLoading();
     showOutput('> Menyiapkan source code...\n> Mengompilasi dengan Clang C++20...','muted');
-    await api.workspace.writeFile('/home/user/default/main.cpp',makeJudgeSource(code,tests));
-    const compileResult=await withTimeout(api.run('clang',['-std=c++20','-O2','/home/user/default/main.cpp','-o','/home/user/default/arena-program']),90000,'Kompilasi');
-    if (compileResult.exitCode!==0) {
-      const errorText=compileResult.stderr || compileResult.stdout || 'Compiler mengembalikan error tanpa detail.';
-      showOutput(`COMPILATION ERROR\n\n${errorText}`,'error');
-      $('#testResultCount').textContent='CE'; toast('Periksa kembali kode C++ kamu.','bad'); return;
+    showOutput('> Menyiapkan source code...\n> Mengompilasi dan menjalankan C++ melalui WebAssembly...','muted');
+    // Use the browser adapter's public compileAndRun API. This avoids relying
+    // on internal VFS paths or manually invoking implementation-specific tools.
+    const executionResult=await withTimeout(
+      api.compileAndRun(makeJudgeSource(code,tests)),
+      90000,
+      'Kompilasi dan eksekusi'
+    );
+    if (executionResult.exitCode!==0) {
+      const errorText=executionResult.stderr || executionResult.stdout || `Proses berhenti dengan exit code ${executionResult.exitCode}.`;
+      showOutput(`COMPILATION / RUNTIME ERROR\n\n${errorText}`,'error');
+      $('#testResultCount').textContent='ERR';
+      toast('Compiler gagal menjalankan program. Periksa pesan error.','bad');
+      return;
     }
-    showOutput('> Compile berhasil.\n> Menjalankan test case...','muted');
-    const runResult=await withTimeout(api.run('/home/user/default/arena-program',[]),7000,'Eksekusi program');
-    if (runResult.exitCode!==0) {
-      const errorText=runResult.stderr || `Program berhenti dengan exit code ${runResult.exitCode}.`;
-      showOutput(`RUNTIME ERROR\n\n${errorText}`,'error'); $('#testResultCount').textContent='RE'; toast('Program mengalami runtime error.','bad'); return;
-    }
-    const result=parseJudgeOutput(runResult.stdout,tests);
+    const result=parseJudgeOutput(executionResult.stdout,tests);
     if (result.cases.length!==tests.length) throw new Error('Output test harness tidak lengkap. Pastikan kode solusi tidak mengubah alur main() milik sistem.');
     const allPassed=renderTestResults(result,tests,mode);
     const duration=Math.round(performance.now()-started);
