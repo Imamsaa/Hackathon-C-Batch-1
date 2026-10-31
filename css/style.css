@@ -36,3 +36,8 @@ button:disabled{cursor:not-allowed}
   .btn-break{padding:8px 7px;font-size:9px}
   .break-count{padding:6px 5px;font-size:8px}
 }
+
+/* Minimal text-only brand requested for the hackathon header. */
+.brand{min-width:0;gap:0}
+.brand-title{display:block;color:var(--text);font:700 17px var(--display);letter-spacing:1.1px;white-space:nowrap}
+@media(max-width:680px){.brand-title{font-size:14px;letter-spacing:.8px}}
