@@ -714,6 +714,7 @@ let cmEditor = null;
 let EditorViewRef = null;
 let editorEditableCompartment = null;
 let sessionStarted = Boolean(Number(localStorage.getItem(START_KEY)));
+let leftTabDuringActiveSession = false;
 let breakState = loadBreakState();
 
 function loadBreakState() {
@@ -833,19 +834,28 @@ function loadProgress() {
 }
 function saveProgress() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 function escapeHTML(value) { return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
-function showClipboardWarning(message) {
+function showClipboardWarning(message, title = 'Peringatan') {
   const modal = $('#clipboardWarningModal');
   if (!modal) {
     toast(message, 'bad');
     return;
   }
+  const titleNode = $('#clipboardWarningTitle');
   const messageNode = $('#clipboardWarningMessage');
+  if (titleNode) titleNode.textContent = title;
   if (messageNode) messageNode.textContent = message;
   modal.classList.remove('hidden');
   modal.setAttribute('aria-hidden', 'false');
   document.body.classList.add('modal-open');
   const acknowledge = $('#clipboardWarningAcknowledge');
   if (acknowledge) acknowledge.focus();
+}
+
+function showTabSwitchWarning() {
+  showClipboardWarning(
+    'Kami mendeteksi kamu meninggalkan tab C++ Hackathon. Tetap fokus pada soal dan jangan membuka browser atau AI selama sesi berlangsung.',
+    'Peringatan Pindah Tab'
+  );
 }
 
 function closeClipboardWarning() {
@@ -1451,6 +1461,24 @@ function bindEvents() {
   $('#clipboardWarningAcknowledge')?.addEventListener('click', closeClipboardWarning);
   $('#clipboardWarningModal')?.addEventListener('click', event => {
     if (event.target === $('#clipboardWarningModal')) closeClipboardWarning();
+  });
+
+  // Page Visibility API: warn only after the participant returns to the tab.
+  // This is a warning-only feature; it does not add violation points or penalties.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (sessionStarted && !breakState.active) {
+        leftTabDuringActiveSession = true;
+      }
+      return;
+    }
+
+    if (leftTabDuringActiveSession) {
+      leftTabDuringActiveSession = false;
+      if (sessionStarted && !breakState.active) {
+        showTabSwitchWarning();
+      }
+    }
   });
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && !$('#clipboardWarningModal')?.classList.contains('hidden')) {
