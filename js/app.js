@@ -1380,12 +1380,13 @@ function runChallenge(mode) {
       $('#runDuration').textContent = duration + ' ms';
       $('#testResultCount').textContent = '—';
       const sections = [];
+      const lineBreak = String.fromCharCode(10);
       if (data.stdout) sections.push(data.stdout);
       else sections.push('(Program selesai tanpa menghasilkan output.)');
-      if (data.stderr) sections.push('[STDERR]\\n' + data.stderr);
-      if (data.runtimeError) sections.push('[RUNTIME ERROR]\\n' + data.runtimeError);
+      if (data.stderr) sections.push('[STDERR]' + lineBreak + data.stderr);
+      if (data.runtimeError) sections.push('[RUNTIME ERROR]' + lineBreak + data.runtimeError);
       showOutput(
-        (data.compileOutput ? '> Compile berhasil.\\n' + data.compileOutput + '\\n\\n' : '') + sections.join('\\n\\n'),
+        (data.compileOutput ? '> Compile berhasil.' + lineBreak + data.compileOutput + lineBreak + lineBreak : '') + sections.join(lineBreak + lineBreak),
         data.runtimeError ? 'error' : ''
       );
       if (data.runtimeError) toast('Program berhenti karena runtime error.', 'bad');
