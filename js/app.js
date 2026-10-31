@@ -875,6 +875,30 @@ function showTabSwitchWarning() {
   );
 }
 
+function isScreenshotShortcut(event) {
+  const key = String(event.key || '').toLowerCase();
+  const printScreen = event.key === 'PrintScreen';
+  // Some browsers may expose OS capture shortcuts to the page; many OS-level
+  // shortcuts are intercepted before the browser receives a keyboard event.
+  const systemCapture = event.metaKey && event.shiftKey && ['s', '3', '4', '5'].includes(key);
+  const printCommand = (event.ctrlKey || event.metaKey) && key === 'p';
+  return { printScreen, systemCapture, printCommand, blocked: printScreen || systemCapture || printCommand };
+}
+
+function showScreenshotWarning(kind) {
+  if (kind === 'print') {
+    showClipboardWarning(
+      'Fitur cetak dinonaktifkan selama sesi hackathon. Soal dan materi tidak boleh disalin atau dibagikan.',
+      'Pencetakan Dibatasi'
+    );
+    return;
+  }
+  showClipboardWarning(
+    'Kami mendeteksi tombol atau shortcut screenshot. Jangan mengambil atau membagikan tangkapan layar soal selama hackathon.',
+    'Screenshot Dilarang'
+  );
+}
+
 function closeClipboardWarning() {
   const modal = $('#clipboardWarningModal');
   if (!modal) return;
@@ -1479,6 +1503,18 @@ function bindEvents() {
   $('#clipboardWarningModal')?.addEventListener('click', event => {
     if (event.target === $('#clipboardWarningModal')) closeClipboardWarning();
   });
+
+  // Best-effort deterrent for screenshot and print shortcuts during an active session.
+  // The operating system may intercept its own capture shortcuts before the page can see them.
+  document.addEventListener('keydown', event => {
+    if (!sessionStarted || breakState.active) return;
+    const shortcut = isScreenshotShortcut(event);
+    if (!shortcut.blocked) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+    showScreenshotWarning(shortcut.printCommand ? 'print' : 'screenshot');
+  }, true);
 
   // Discourage common browser DevTools / View Source shortcuts during the active session.
   // This is a client-side deterrent, not a security boundary.
