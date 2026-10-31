@@ -106,7 +106,17 @@
         </div>
 
         <div class="editor-caption"><span><i class="status-dot"></i> EDITOR</span><span id="editorStatus">All changes saved</span></div>
-        <div id="editorHost" class="editor-host"><textarea id="codeFallback" spellcheck="false" aria-label="Editor C++"></textarea></div>
+        <div id="editorHost" class="editor-host">
+          <textarea id="codeFallback" spellcheck="false" aria-label="Editor C++"></textarea>
+          <div id="sessionLockOverlay" class="session-lock-overlay">
+            <div class="session-lock-card">
+              <span class="session-lock-icon">◷</span>
+              <strong>Sesi belum dimulai</strong>
+              <p>Soal pertama bisa kamu lihat terlebih dahulu. Editor dan tantangan lainnya akan terbuka setelah kamu menekan <b>Mulai Sesi</b>.</p>
+              <small>Waktu hackathon mulai dihitung saat sesi dibuka.</small>
+            </div>
+          </div>
+        </div>
 
         <div class="editor-footer"><span>Ln <b id="lineCount">1</b>, Col 1</span><span>UTF-8 <i></i> C++20</span><span class="shortcut-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> Run</span></div>
 

@@ -709,6 +709,41 @@ let compileBusy = false;
 let lastResult = null;
 let timerInterval = null;
 let activeConsoleTab = 'output';
+let sessionStarted = Boolean(Number(localStorage.getItem(START_KEY)));
+
+function requireSession() {
+  if (sessionStarted) return true;
+  toast('Tekan Mulai Sesi terlebih dahulu untuk membuka tantangan.', 'bad');
+  return false;
+}
+
+function updateSessionLock() {
+  const locked = !sessionStarted;
+  const startButton = $('#startTimerBtn');
+  if (startButton) {
+    startButton.textContent = locked ? 'Mulai Sesi' : 'Sesi Aktif';
+    startButton.disabled = !locked;
+  }
+
+  const editorInput = $('#codeFallback');
+  if (editorInput) {
+    editorInput.readOnly = locked;
+    editorInput.setAttribute('aria-readonly', String(locked));
+  }
+
+  ['runBtn','submitBtn','resetCodeBtn','downloadCodeBtn','bookmarkBtn','copySignatureBtn','searchInput']
+    .forEach(id => { const element = document.getElementById(id); if (element) element.disabled = locked; });
+  document.querySelectorAll('[data-filter],[data-tab]').forEach(button => { button.disabled = locked; });
+  const overlay = $('#sessionLockOverlay');
+  if (overlay) overlay.classList.toggle('hidden', !locked);
+  const editorHost = $('#editorHost');
+  if (editorHost) editorHost.classList.toggle('session-locked', locked);
+  const challengeList = $('#challengeList');
+  if (challengeList) challengeList.classList.toggle('session-locked', locked);
+  const editorStatus = $('#editorStatus');
+  if (editorStatus) editorStatus.textContent = locked ? 'Terkunci · Mulai sesi untuk coding' : 'All changes saved';
+  renderChallengeList();
+}
 
 function loadProgress() {
   try {
@@ -736,11 +771,11 @@ function renderChallengeList() {
   const query = $('#searchInput').value.trim().toLowerCase();
   const visible = challenges.filter(ch => (activeFilter === 'all' || String(ch.stage) === activeFilter) && `${ch.title} ${ch.category} tahap ${ch.stage}`.toLowerCase().includes(query));
   $('#challengeList').innerHTML = visible.map(ch => `
-    <button class="challenge-item ${ch.id === activeChallenge.id ? 'active' : ''}" data-challenge="${ch.id}">
+    <button class="challenge-item ${ch.id === activeChallenge.id ? 'active' : ''} ${sessionStarted ? '' : 'locked'}" data-challenge="${ch.id}" ${sessionStarted ? '' : 'disabled aria-disabled="true"'}>
       <span class="challenge-number">${String(challenges.indexOf(ch)+1).padStart(2,'0')}</span>
       <span class="challenge-name">${escapeHTML(ch.title)}</span>
       <span class="challenge-xp">${ch.xp}</span>
-      <span class="challenge-check">${state.solved.includes(ch.id) ? '✓' : ''}</span>
+      <span class="challenge-check">${sessionStarted ? (state.solved.includes(ch.id) ? '✓' : '') : '🔒'}</span>
     </button>`).join('') || '<div class="empty-console"><div><strong>Challenge tidak ditemukan</strong><p>Coba kata kunci lain.</p></div></div>';
   $('#challengeCount').textContent = String(visible.length).padStart(2,'0');
   document.querySelectorAll('[data-challenge]').forEach(btn => btn.addEventListener('click', () => selectChallenge(btn.dataset.challenge)));
@@ -770,6 +805,7 @@ function renderChallenge() {
   clearConsole();
 }
 function selectChallenge(id) {
+  if (!requireSession()) return;
   const next = challenges.find(ch => ch.id === id); if (!next) return;
   state.drafts[activeChallenge.id] = getCode();
   activeChallenge = next; state.lastTaskId = id; saveProgress(); renderChallenge();
@@ -782,7 +818,9 @@ function persistDraft() { state.drafts[activeChallenge.id] = getCode(); state.la
 function initEditor() {
   const input = $('#codeFallback');
   input.value = state.drafts[activeChallenge.id] || activeChallenge.starter;
+  input.readOnly = !sessionStarted;
   input.addEventListener('input', () => {
+    if (!requireSession()) return;
     persistDraft();
     $('#lineCount').textContent = String(input.value.split('\n').length);
   });
@@ -811,7 +849,7 @@ function showLoading(title, message) { $('#loadingTitle').textContent=title; $('
 function updateLoading(title,message,percent) { $('#loadingTitle').textContent=title; $('#loadingMessage').textContent=message; $('#loadingProgress').style.width=`${percent}%`; }
 function hideLoading() { $('#loadingOverlay').classList.add('hidden'); }
 function runChallenge(mode) {
-  if (compileBusy) return;
+  if (!requireSession() || compileBusy) return;
   const code = getCode();
   if (!code.trim()) { toast('Editor masih kosong. Tulis program terlebih dahulu.','bad'); return; }
   if (!/\bmain\s*\(/.test(code)) {
@@ -937,6 +975,8 @@ function runChallenge(mode) {
 function startTimer() {
   let startedAt=Number(localStorage.getItem(START_KEY));
   if (!startedAt) { startedAt=Date.now(); localStorage.setItem(START_KEY,String(startedAt)); }
+  sessionStarted = true;
+  updateSessionLock();
   if (timerInterval) return;
   $('#startTimerBtn').textContent='Sesi Aktif'; $('#startTimerBtn').disabled=true;
   const tick=()=>{
@@ -949,9 +989,10 @@ function startTimer() {
 }
 function bindEvents() {
   document.querySelectorAll('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>{
+    if(!requireSession())return;
     activeFilter=btn.dataset.filter; document.querySelectorAll('[data-filter]').forEach(item=>item.classList.toggle('active',item===btn)); renderChallengeList();
   }));
-  $('#searchInput').addEventListener('input',renderChallengeList);
+  $('#searchInput').addEventListener('input',()=>{if(!requireSession())return;renderChallengeList();});
   $('#searchInput').addEventListener('keydown',event=>{if(event.key==='Escape'){$('#searchInput').value='';renderChallengeList();}});
   document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{
     const tab=btn.dataset.tab; document.querySelectorAll('[data-tab]').forEach(item=>item.classList.toggle('active',item===btn));
@@ -961,12 +1002,14 @@ function bindEvents() {
   $('#runBtn').addEventListener('click',()=>runChallenge('run'));
   $('#submitBtn').addEventListener('click',()=>runChallenge('submit'));
   $('#startTimerBtn').addEventListener('click',startTimer);
-  $('#resetCodeBtn').addEventListener('click',()=>{setCode(activeChallenge.starter);persistDraft();toast('Kode dikembalikan ke template awal.');});
+  $('#resetCodeBtn').addEventListener('click',()=>{if(!requireSession())return;setCode(activeChallenge.starter);persistDraft();toast('Kode dikembalikan ke template awal.');});
   $('#downloadCodeBtn').addEventListener('click',()=>{
+    if(!requireSession())return;
     const blob=new Blob([getCode()],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`${activeChallenge.id}.cpp`;a.click();URL.revokeObjectURL(url);toast('File C++ berhasil disiapkan untuk diunduh.','good');
   });
-  $('#copySignatureBtn').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(activeChallenge.signature);toast('Function signature disalin.','good');}catch{toast('Clipboard tidak tersedia di browser ini.','bad');}});
+  $('#copySignatureBtn').addEventListener('click',async()=>{if(!requireSession())return;try{await navigator.clipboard.writeText(activeChallenge.signature);toast('Function signature disalin.','good');}catch{toast('Clipboard tidak tersedia di browser ini.','bad');}});
   $('#bookmarkBtn').addEventListener('click',()=>{
+    if(!requireSession())return;
     const index=state.bookmarks.indexOf(activeChallenge.id);if(index>=0)state.bookmarks.splice(index,1);else state.bookmarks.push(activeChallenge.id);saveProgress();renderChallenge();
   });
   $('#clearOutputBtn').addEventListener('click',clearConsole);
@@ -977,7 +1020,10 @@ function bindEvents() {
 }
 
 function init() {
-  initEditor(); bindEvents(); renderChallenge();
-  if(Number(localStorage.getItem(START_KEY))) startTimer();
+  initEditor();
+  bindEvents();
+  updateSessionLock();
+  renderChallenge();
+  if(sessionStarted) startTimer();
 }
 init();

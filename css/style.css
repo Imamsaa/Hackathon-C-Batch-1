@@ -7,3 +7,19 @@
 @media(max-width:680px){.app-shell{padding:0 10px}.topbar{height:64px}.brand{min-width:0}.brand-mark{width:34px;height:34px}.brand-copy strong{font-size:13px}.brand-copy small{font-size:8px}.top-actions{gap:7px}.timer-chip{padding:7px 8px;gap:5px}.timer-label{display:none}.avatar{width:30px;height:30px}.top-actions .btn{font-size:9px;padding:8px}.workspace{display:flex;flex-direction:column;padding-top:10px}.sidebar{min-height:0;padding:13px}.sidebar-heading{padding-bottom:10px}.sidebar-heading h2{font-size:16px}.search-box{margin-bottom:12px}.track-filters{display:flex;overflow:auto;margin-bottom:12px}.filter-btn{white-space:nowrap;font-size:10px;padding:8px}.filter-count{display:none}.challenge-list-heading{padding-bottom:7px}.challenge-list{display:grid;grid-template-columns:1fr 1fr;max-height:180px;min-height:0;overflow:auto}.challenge-item{padding:7px 5px;gap:5px}.challenge-name{font-size:9px}.challenge-xp{font-size:8px}.sidebar-bottom{display:none}.problem-panel{min-height:0;padding:16px 14px}.problem-heading{margin:12px 0 15px}.problem-heading h1{font-size:20px}.problem-description{font-size:11px}.editor-panel{min-height:680px}.editor-host{height:320px}.editor-tools{gap:9px}.tool-btn span{display:none}.runbar{align-items:flex-start;flex-direction:column}.runbar-note{font-size:9px}.run-actions{width:100%}.run-actions .btn{flex:1}.page-footer{font-size:7px}.page-footer span:last-child{letter-spacing:0}.console-view{min-height:130px}.loading-card{padding:28px 20px}}
 
 .stage-tag{display:inline-flex;align-items:center;margin-left:8px;padding:4px 7px;border:1px solid var(--line);border-radius:6px;color:var(--muted);font:10px var(--mono);letter-spacing:.4px}.track-filters{max-height:310px;overflow:auto}
+
+/* Session gate: the first problem is preview-only until a participant starts. */
+.editor-host{position:relative}
+.editor-host.session-locked textarea{filter:blur(1.2px);opacity:.38;pointer-events:none;user-select:none}
+.session-lock-overlay{position:absolute;inset:0;z-index:4;display:grid;place-items:center;padding:18px;background:rgba(5,10,17,.72);backdrop-filter:blur(3px)}
+.session-lock-overlay.hidden{display:none!important}
+.session-lock-card{width:min(380px,100%);padding:24px 22px;text-align:center;border:1px solid #34475b;border-radius:12px;background:rgba(17,28,42,.97);box-shadow:0 18px 48px #0008}
+.session-lock-icon{display:grid;place-items:center;width:42px;height:42px;margin:0 auto 13px;border-radius:50%;background:rgba(185,243,107,.1);color:var(--green);font-size:22px}
+.session-lock-card strong{display:block;color:var(--text);font:600 16px var(--display)}
+.session-lock-card p{margin:9px 0;color:#aebdcc;font-size:11px;line-height:1.7}
+.session-lock-card small{color:var(--green);font:9px var(--mono)}
+.challenge-item:disabled,.filter-btn:disabled,.problem-tab:disabled{opacity:.55;cursor:not-allowed}
+.challenge-item.locked .challenge-name{color:#8291a4}
+.challenge-list.session-locked{opacity:.86}
+button:disabled{cursor:not-allowed}
+@media(max-width:680px){.session-lock-card{padding:18px 15px}.session-lock-card p{font-size:10px}}
