@@ -7,7 +7,7 @@
   <meta name="description" content="Code Arena — C++ Hackathon Challenge Platform" />
   <title>Code Arena — C++ Hackathon</title>
   <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-  <link rel="stylesheet" href="./css/style.css?v=editor-enhanced-1" />
+  <link rel="stylesheet" href="./css/style.css?v=clipboard-modal-1" />
   <!-- Provides COOP/COEP headers on GitHub Pages for WebAssembly threads. -->
   <script src="./coi-serviceworker.js?v=browsercc-worker-2"></script>
   <script type="importmap">
@@ -156,9 +156,20 @@
     <footer class="page-footer"><span>CODEARENA <b>·</b> Dirancang untuk pelajar SMP</span><span>POWERED BY <strong>WEBASSEMBLY</strong> <i class="footer-dot"></i> C++20</span></footer>
   </div>
   <div id="toastRegion" class="toast-region" aria-live="polite"></div>
+  <div id="clipboardWarningModal" class="clipboard-modal hidden" role="dialog" aria-modal="true" aria-labelledby="clipboardWarningTitle" aria-describedby="clipboardWarningMessage" aria-hidden="true">
+    <div class="clipboard-modal-backdrop"></div>
+    <div class="clipboard-modal-card">
+      <div class="clipboard-modal-icon" aria-hidden="true">!</div>
+      <p class="clipboard-modal-eyebrow">ATURAN HACKATHON</p>
+      <h2 id="clipboardWarningTitle">Peringatan</h2>
+      <p id="clipboardWarningMessage" class="clipboard-modal-message">Copy, cut, dan paste dinonaktifkan selama hackathon. Ketik kode secara mandiri.</p>
+      <button id="clipboardWarningAcknowledge" class="btn btn-primary clipboard-modal-button" type="button">Saya Mengerti</button>
+    </div>
+  </div>
+
   <div id="loadingOverlay" class="loading-overlay hidden">
     <div class="loading-card"><div class="loader-ring"></div><p class="eyebrow">WASM COMPILER</p><h2 id="loadingTitle">Menyiapkan compiler...</h2><p id="loadingMessage">Menginisialisasi lingkungan C++ di browser.</p><div class="loading-progress"><span id="loadingProgress"></span></div><small>Proses pertama kali dapat memerlukan waktu lebih lama.</small></div>
   </div>
-  <script type="module" src="./js/app.js?v=editor-enhanced-1"></script>
+  <script type="module" src="./js/app.js?v=clipboard-modal-1"></script>
 </body>
 </html>

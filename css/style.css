@@ -63,3 +63,19 @@ button:disabled{cursor:not-allowed}
 /* Clipboard restrictions are scoped to the coding workspace. */
 .editor-policy-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;border:1px solid rgba(244,198,111,.22);border-radius:5px;background:rgba(244,198,111,.06);color:#d9bd82;font:8px var(--mono);letter-spacing:.55px;white-space:nowrap}
 @media(max-width:680px){.editor-policy-chip{font-size:7px;padding:4px 5px;letter-spacing:0}.editor-tools{gap:7px}}
+
+/* Centered, high-visibility warning for blocked clipboard actions. */
+body.modal-open{overflow:hidden}
+.clipboard-modal{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:20px}
+.clipboard-modal.hidden{display:none!important}
+.clipboard-modal-backdrop{position:absolute;inset:0;background:rgba(2,6,12,.82);backdrop-filter:blur(5px);animation:clipboardFadeIn .14s ease-out}
+.clipboard-modal-card{position:relative;width:min(430px,100%);padding:30px 28px 25px;border:1px solid rgba(255,109,126,.48);border-radius:15px;background:linear-gradient(155deg,#172438,#0e1826);box-shadow:0 24px 90px rgba(0,0,0,.65);text-align:center;animation:clipboardModalIn .18s ease-out}
+.clipboard-modal-icon{display:grid;place-items:center;width:52px;height:52px;margin:0 auto 15px;border:1px solid rgba(255,109,126,.38);border-radius:50%;background:rgba(255,109,126,.11);color:#ff8997;font:700 27px var(--display)}
+.clipboard-modal-eyebrow{margin:0 0 7px;color:#ff9aa5;font:500 9px var(--mono);letter-spacing:1.8px}
+.clipboard-modal-card h2{margin:0 0 10px;color:var(--text);font:700 21px var(--display)}
+.clipboard-modal-message{margin:0 auto 22px;max-width:340px;color:#c3cfdd;font-size:13px;line-height:1.7}
+.clipboard-modal-button{min-width:145px;min-height:40px;font-size:12px}
+.clipboard-modal-button:focus-visible{outline:2px solid #fff;outline-offset:3px}
+@keyframes clipboardFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes clipboardModalIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:520px){.clipboard-modal{padding:16px}.clipboard-modal-card{padding:25px 19px 21px}.clipboard-modal-card h2{font-size:19px}.clipboard-modal-message{font-size:12px}}

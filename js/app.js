@@ -833,6 +833,32 @@ function loadProgress() {
 }
 function saveProgress() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 function escapeHTML(value) { return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+function showClipboardWarning(message) {
+  const modal = $('#clipboardWarningModal');
+  if (!modal) {
+    toast(message, 'bad');
+    return;
+  }
+  const messageNode = $('#clipboardWarningMessage');
+  if (messageNode) messageNode.textContent = message;
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+  const acknowledge = $('#clipboardWarningAcknowledge');
+  if (acknowledge) acknowledge.focus();
+}
+
+function closeClipboardWarning() {
+  const modal = $('#clipboardWarningModal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+  const editor = $('#codeFallback');
+  if (cmEditor && !breakState.active && sessionStarted) cmEditor.focus();
+  else if (editor && !editor.readOnly) editor.focus();
+}
+
 function toast(message, kind = '') {
   const el = document.createElement('div'); el.className = `toast ${kind}`; el.textContent = message; $('#toastRegion').append(el); setTimeout(() => el.remove(), 3400);
 }
@@ -1126,7 +1152,7 @@ function installEditorClipboardGuards() {
     event.preventDefault();
     event.stopPropagation();
     if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
-    toast('Copy, cut, dan paste dinonaktifkan selama hackathon. Ketik kode secara mandiri.', 'bad');
+    showClipboardWarning('Copy, cut, dan paste dinonaktifkan selama hackathon. Ketik kode secara mandiri.', 'bad');
   }, true);
 
   ['copy', 'cut', 'paste'].forEach(type => {
@@ -1134,7 +1160,7 @@ function installEditorClipboardGuards() {
       event.preventDefault();
       event.stopPropagation();
       if (type === 'paste') {
-        toast('Paste dinonaktifkan. Silakan ketik kode secara mandiri.', 'bad');
+        showClipboardWarning('Paste dinonaktifkan. Silakan ketik kode secara mandiri.', 'bad');
       }
     }, true);
   });
@@ -1143,21 +1169,21 @@ function installEditorClipboardGuards() {
     if (event.inputType === 'insertFromPaste' || event.inputType === 'insertFromDrop') {
       event.preventDefault();
       event.stopPropagation();
-      toast('Memasukkan kode melalui clipboard atau drop dinonaktifkan.', 'bad');
+      showClipboardWarning('Memasukkan kode melalui clipboard atau drop dinonaktifkan.', 'bad');
     }
   }, true);
 
   host.addEventListener('contextmenu', event => {
     event.preventDefault();
     event.stopPropagation();
-    toast('Menu klik-kanan dinonaktifkan pada editor selama hackathon.', 'bad');
+    showClipboardWarning('Menu klik-kanan dinonaktifkan pada editor selama hackathon.', 'bad');
   }, true);
 
   ['dragover', 'drop'].forEach(type => {
     host.addEventListener(type, event => {
       event.preventDefault();
       event.stopPropagation();
-      if (type === 'drop') toast('Drag-and-drop kode dinonaktifkan selama hackathon.', 'bad');
+      if (type === 'drop') showClipboardWarning('Drag-and-drop kode dinonaktifkan selama hackathon.', 'bad');
     }, true);
   });
 }
@@ -1422,6 +1448,16 @@ function toggleBreak() {
   else startBreak();
 }
 function bindEvents() {
+  $('#clipboardWarningAcknowledge')?.addEventListener('click', closeClipboardWarning);
+  $('#clipboardWarningModal')?.addEventListener('click', event => {
+    if (event.target === $('#clipboardWarningModal')) closeClipboardWarning();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !$('#clipboardWarningModal')?.classList.contains('hidden')) {
+      event.preventDefault();
+      closeClipboardWarning();
+    }
+  });
   document.querySelectorAll('[data-filter]').forEach(btn=>btn.addEventListener('click',()=>{
     if(!requireSession())return;
     activeFilter=btn.dataset.filter; document.querySelectorAll('[data-filter]').forEach(item=>item.classList.toggle('active',item===btn)); renderChallengeList();
