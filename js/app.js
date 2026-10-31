@@ -1,7 +1,12 @@
 import { EditorView, basicSetup } from 'https://esm.sh/codemirror@6.0.1';
 import { cpp } from 'https://esm.sh/@codemirror/lang-cpp@6.0.2';
 import { oneDark } from 'https://esm.sh/@codemirror/theme-one-dark@6.1.2';
-import { createEmception, ensureCrossOriginIsolated } from 'https://esm.sh/@gameguild/emception-browser@4.5.0';
+// Load the compiler only when a participant runs code. If one CDN is down,
+// try the secondary CDN without preventing the challenge UI from starting.
+const EMCEPTION_CDN_CANDIDATES = [
+  'https://esm.sh/@gameguild/emception-browser@4.5.2?bundle',
+  'https://cdn.jsdelivr.net/npm/@gameguild/emception-browser@4.5.2/+esm'
+];
 
 const SESSION_SECONDS = 90 * 60;
 const STORAGE_KEY = 'codearena-cpp-progress-v1';
@@ -268,13 +273,36 @@ async function getCompiler() {
   if (compiler) return compiler;
   showLoading('Menyiapkan compiler...', 'Menyiapkan lingkungan WebAssembly untuk C++.');
   try {
-    if (!crossOriginIsolated) {
-      updateLoading('Mengaktifkan mode aman browser...', 'GitHub Pages membutuhkan service worker untuk mengaktifkan SharedArrayBuffer.', 24);
-      await ensureCrossOriginIsolated();
+    updateLoading('Memeriksa keamanan browser...', 'Menunggu Cross-Origin Isolation dari service worker GitHub Pages.', 24);
+    // The self-hosted COI service worker is loaded by index.html and controls
+    // this page after its first registration/reload.
+    const isolationDeadline = Date.now() + 5000;
+    while (!crossOriginIsolated && Date.now() < isolationDeadline) {
+      await new Promise(resolve => setTimeout(resolve, 150));
     }
-    if (!crossOriginIsolated) throw new Error('Cross-origin isolation belum aktif. Pastikan situs dibuka melalui HTTPS dan service worker diizinkan.');
-    updateLoading('Memuat toolchain C++...', 'Clang dan library standar sedang dimuat ke browser.', 48);
-    compiler = await createEmception({tty:'none'});
+    if (!crossOriginIsolated) {
+      throw new Error('Cross-Origin Isolation belum aktif. Pastikan file coi-serviceworker.js termuat, buka situs melalui HTTPS, lalu refresh halaman.');
+    }
+
+    updateLoading('Memuat modul compiler...', 'Menghubungkan runtime C++ WebAssembly.', 42);
+    const failures = [];
+    for (const url of EMCEPTION_CDN_CANDIDATES) {
+      try {
+        const module = await import(url);
+        if (typeof module.createEmception !== 'function') {
+          throw new Error('createEmception tidak ditemukan pada modul CDN.');
+        }
+        updateLoading('Memuat toolchain C++...', 'Clang dan library standar sedang dimuat ke browser.', 58);
+        compiler = await module.createEmception({tty:'none'});
+        break;
+      } catch (error) {
+        failures.push(`${url}: ${error?.message || error}`);
+        console.warn('Compiler CDN gagal dimuat:', url, error);
+      }
+    }
+    if (!compiler) {
+      throw new Error(`Gagal memuat compiler dari seluruh CDN:\\n${failures.join('\\n')}\\nPeriksa koneksi internet atau coba beberapa saat lagi.`);
+    }
     if (compiler?.on) compiler.on('progress', event => {
       const phase=event?.phase || 'Memuat runtime';
       const message=event?.message || phase;
@@ -309,15 +337,15 @@ async function runChallenge(mode) {
     const api=await getCompiler();
     hideLoading();
     showOutput('> Menyiapkan source code...\n> Mengompilasi dengan Clang C++20...','muted');
-    await api.writeFile('/home/user/main.cpp',makeJudgeSource(code,tests));
-    const compileResult=await withTimeout(api.run('clang',['-std=c++20','-O2','/home/user/main.cpp','-o','/home/user/arena-program']),90000,'Kompilasi');
+    await api.workspace.writeFile('/home/user/default/main.cpp',makeJudgeSource(code,tests));
+    const compileResult=await withTimeout(api.run('clang',['-std=c++20','-O2','/home/user/default/main.cpp','-o','/home/user/default/arena-program']),90000,'Kompilasi');
     if (compileResult.exitCode!==0) {
       const errorText=compileResult.stderr || compileResult.stdout || 'Compiler mengembalikan error tanpa detail.';
       showOutput(`COMPILATION ERROR\n\n${errorText}`,'error');
       $('#testResultCount').textContent='CE'; toast('Periksa kembali kode C++ kamu.','bad'); return;
     }
     showOutput('> Compile berhasil.\n> Menjalankan test case...','muted');
-    const runResult=await withTimeout(api.run('/home/user/arena-program',[]),7000,'Eksekusi program');
+    const runResult=await withTimeout(api.run('/home/user/default/arena-program',[]),7000,'Eksekusi program');
     if (runResult.exitCode!==0) {
       const errorText=runResult.stderr || `Program berhenti dengan exit code ${runResult.exitCode}.`;
       showOutput(`RUNTIME ERROR\n\n${errorText}`,'error'); $('#testResultCount').textContent='RE'; toast('Program mengalami runtime error.','bad'); return;
